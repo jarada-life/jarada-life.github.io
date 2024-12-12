@@ -9,12 +9,13 @@ export const supabaseConfig = {
 export async function saveTokenToSupabase(token, userId = 'anonymous') {
     try {
         // const response = await fetch(`${supabaseConfig.projectUrl}/rest/v1/${supabaseConfig.tableName}`, {
-            const response = await fetch(`${supabaseConfig.projectUrl}/rest/v1/rpc/${supabaseConfig.schema}_${supabaseConfig.tableName}`, {
+        const response = await fetch(`${supabaseConfig.projectUrl}/rest/v1/${supabaseConfig.tableName}`, {
             method: 'POST',
             headers: {
                 'apikey': supabaseConfig.anonKey,
                 'Authorization': `Bearer ${supabaseConfig.anonKey}`,
                 'Content-Type': 'application/json',
+                'Content-Profile': supabaseConfig.schema,  // 스키마 지정 방식 수정
                 'Prefer': 'resolution=merge-duplicates'
             },
             body: JSON.stringify({
