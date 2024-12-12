@@ -9,16 +9,29 @@
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.3.0/firebase-app.js';
         import { getMessaging, getToken, onMessage } from 'https://www.gstatic.com/firebasejs/10.3.0/firebase-messaging.js';
 
+        // Service Worker 등록
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./firebase-messaging-sw.js')
+                .then(registration => {
+                    console.log('Service Worker registered:', registration);
+                })
+                .catch(err => {
+                    console.error('Service Worker registration failed:', err);
+                });
+        }
+
         // Firebase 초기화
         const app = initializeApp(firebaseConfig);
         const messaging = getMessaging(app);
 
-         // 버튼 이벤트 리스너
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById("requestPermission").addEventListener("click", async () => {
                 try {
                     const permission = await Notification.requestPermission();
                     if (permission === 'granted') {
+                        // Service Worker가 활성화될 때까지 잠시 대기
+                        await navigator.serviceWorker.ready;
+                        
                         const token = await getToken(messaging, {
                             vapidKey: "YOUR_VAPID_KEY"
                         });
@@ -31,7 +44,6 @@
             });
         });
 
-        // 메시지 수신 처리
         onMessage(messaging, (payload) => {
             console.log("Message received. ", payload);
             const { title, body } = payload.notification;
