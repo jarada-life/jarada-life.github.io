@@ -33,7 +33,7 @@
                         await navigator.serviceWorker.ready;
                         
                         const token = await getToken(messaging, {
-                            vapidKey: "YOUR_VAPID_KEY"
+                            vapidKey: firebaseConfig.vapid
                         });
                         console.log("FCM Token:", token);
                         alert("Token retrieved. Check the console.");
