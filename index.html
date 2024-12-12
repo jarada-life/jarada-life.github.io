@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Push Notification Example</title>
+    <script src="https://www.gstatic.com/firebasejs/10.3.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.3.0/firebase-messaging.js"></script>
+</head>
+<body>
+    <h1>FCM Push Notification Example</h1>
+    <button id="requestPermission">Enable Notifications</button>
+    <script>
+        // 1. Firebase 초기화
+        const firebaseConfig = {
+            apiKey: "AIzaSyAIbzvJunRGn9J2_MtHOlSDkp3Y2fLyZtc",
+            authDomain: "woory-common.firebaseapp.com",
+            projectId: "woory-common",
+            storageBucket: "woory-common.appspot.com",
+            messagingSenderId: "594982737859",
+            appId: "1:594982737859:web:0f1ab35c0e29cb1d8e0f76"
+        };
+        const app = firebase.initializeApp(firebaseConfig);
+        const messaging = firebase.messaging();
+
+        // 2. 알림 권한 요청 및 토큰 가져오기
+        document.getElementById("requestPermission").addEventListener("click", async () => {
+            try {
+                await Notification.requestPermission();
+                const token = await messaging.getToken({
+                    vapidKey: "BPqVKSRIA7Jcpi-yPdKgaxXCaFvttySjD1_F4S1Pa5OqdakmyNAznkoQqY3FVqXaYhmo9Zsr_Dw6gAJEBwXCmA4"
+                });
+                console.log("FCM Token:", token);
+                alert("Token retrieved. Check the console.");
+            } catch (err) {
+                console.error("Permission denied or error occurred", err);
+            }
+        });
+
+        // 3. 수신 메시지 처리
+        messaging.onMessage((payload) => {
+            console.log("Message received. ", payload);
+            const { title, body } = payload.notification;
+            new Notification(title, { body });
+        });
+    </script>
+</body>
+</html>
