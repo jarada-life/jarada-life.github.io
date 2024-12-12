@@ -1,6 +1,6 @@
 importScripts('https://www.gstatic.com/firebasejs/10.3.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.3.0/firebase-messaging-compat.js');
-importScripts('./firebase-config.js');  // 다른 버전의 config 파일 필요
+importScripts('./firebase-config-sw.js');
 
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
