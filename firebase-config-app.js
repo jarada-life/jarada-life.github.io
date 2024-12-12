@@ -1,4 +1,4 @@
-export const config = {
+export const firebaseConfig = {
   apiKey: "AIzaSyAIbzvJunRGn9J2_MtHOlSDkp3Y2fLyZtc",
   authDomain: "woory-common.firebaseapp.com",
   projectId: "woory-common",
