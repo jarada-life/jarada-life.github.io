@@ -13,6 +13,18 @@ serve(async (req) => {
 
   try {
     const { title, body, scheduledTime } = await req.json()
+
+    if (!title || !body) {
+        return new Response(
+            JSON.stringify({ error: 'Title and body are required' }),
+            { 
+                status: 400,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            }
+        )
+    }
+
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -48,9 +60,13 @@ serve(async (req) => {
       )
     }
   } catch (error) {
+    console.error('Error details:', error)  // 로그 추가
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: error.message }),
+        { 
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
     )
   }
 })
