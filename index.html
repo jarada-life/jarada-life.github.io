@@ -4,60 +4,207 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Push Notification Example</title>
+    <title>Push Notification Manager</title>
+    <style>
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+        }
+
+        #status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        .success {
+            background-color: #dff0d8;
+            color: #3c763d;
+        }
+
+        .error {
+            background-color: #f2dede;
+            color: #a94442;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Push Notification Manager</h1>
+
+        <!-- FCM Token 등록 섹션 -->
+        <div class="form-group">
+            <button id="requestPermission">Enable Notifications</button>
+        </div>
+
+        <hr>
+
+        <!-- 알림 전송 폼 -->
+        <div class="form-group">
+            <label for="title">Notification Title:</label>
+            <input type="text" id="title" placeholder="Enter notification title">
+
+            <label for="message">Notification Message:</label>
+            <textarea id="message" rows="4" placeholder="Enter notification message"></textarea>
+
+            <label for="scheduleType">Send Type:</label>
+            <select id="scheduleType">
+                <option value="immediate">Send Immediately</option>
+                <option value="scheduled">Schedule for Later</option>
+            </select>
+
+            <div id="scheduleTimeContainer" style="display: none;">
+                <label for="scheduledTime">Schedule Time:</label>
+                <input type="datetime-local" id="scheduledTime">
+            </div>
+
+            <button id="sendNotification">Send Notification</button>
+        </div>
+
+        <!-- 상태 메시지 표시 영역 -->
+        <div id="status"></div>
+    </div>
+
     <script type="module">
-        import { firebaseConfig } from './firebase-config-app.js';
+        import { firebaseConfig } from '../config/firebase-config-app.js';
+        import { supabaseConfig } from '../config/supabase-config-app.js';
+        import { saveTokenToSupabase } from '../config/supabase-config-app.js';
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.3.0/firebase-app.js';
         import { getMessaging, getToken, onMessage } from 'https://www.gstatic.com/firebasejs/10.3.0/firebase-messaging.js';
-        import { saveTokenToSupabase } from './supabase-config-app.js';
-
-        // Service Worker 등록
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./firebase-messaging-sw.js')
-                .then(registration => {
-                    console.log('Service Worker registered:', registration);
-                })
-                .catch(err => {
-                    console.error('Service Worker registration failed:', err);
-                });
-        }
 
         // Firebase 초기화
         const app = initializeApp(firebaseConfig);
         const messaging = getMessaging(app);
 
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById("requestPermission").addEventListener("click", async () => {
-                try {
-                    const permission = await Notification.requestPermission();
-                    if (permission === 'granted') {
-                        await navigator.serviceWorker.ready;
-                        
-                        const token = await getToken(messaging, {
-                            vapidKey: firebaseConfig.vapid
-                        });
-                        
-                        // Supabase에 토큰 저장
-                        await saveTokenToSupabase(token);
-                        console.log("Token saved to Supabase!");
-                    }
-                } catch (err) {
-                    console.error("Error:", err);
-                }
-            });
+        // 상태 메시지 표시 함수
+        function showStatus(message, isError = false) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = isError ? 'error' : 'success';
+        }
+
+        document.getElementById('scheduleType').addEventListener('change', (e) => {
+            const scheduleTimeContainer = document.getElementById('scheduleTimeContainer');
+            scheduleTimeContainer.style.display = e.target.value === 'scheduled' ? 'block' : 'none';
         });
 
+        // FCM Token 등록
+        document.getElementById("requestPermission").addEventListener("click", async () => {
+            try {
+                const permission = await Notification.requestPermission();
+                if (permission === 'granted') {
+                    await navigator.serviceWorker.ready;
+                    const token = await getToken(messaging, {
+                        vapidKey: "YOUR_VAPID_KEY"
+                    });
+                    await saveTokenToSupabase(token);
+                    showStatus("Successfully registered for notifications!");
+                }
+            } catch (err) {
+                showStatus(err.message, true);
+                console.error("Error:", err);
+            }
+        });
+
+        // 알림 전송
+        // document.getElementById("sendNotification").addEventListener("click", async () => {
+        //     const titleInput = document.getElementById('title');
+        //     const messageInput = document.getElementById('message');
+
+        //     if (!titleInput.value || !messageInput.value) {
+        //         showStatus("Please enter both title and message", true);
+        //         return;
+        //     }
+
+        //     // 여기에 알림 전송 로직이 들어갈 예정
+        //     showStatus("Note: Direct sending from static pages is not supported. Please implement a backend service for sending notifications.");
+        // });
+        // sendNotification 버튼 클릭 핸들러 수정
+        document.getElementById("sendNotification").addEventListener("click", async () => {
+            const title = document.getElementById('title').value;
+            const message = document.getElementById('message').value;
+            const scheduleType = document.getElementById('scheduleType').value;
+            const scheduledTime = scheduleType === 'scheduled' ?
+                document.getElementById('scheduledTime').value : null;
+
+            if (!title || !message) {
+                showStatus("Please enter both title and message", true);
+                return;
+            }
+
+            if (scheduleType === 'scheduled' && !scheduledTime) {
+                showStatus("Please select a schedule time", true);
+                return;
+            }
+
+            try {
+                const response = await fetch(
+                    // PROJECT_REF 대신 supabaseConfig 사용
+                    `${supabaseConfig.projectUrl}/functions/v1/send-notification`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${supabaseConfig.anonKey}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            title,
+                            body: message,
+                            scheduledTime: scheduledTime ? new Date(scheduledTime).toISOString() : null
+                        })
+                    }
+                );
+
+                if (!response.ok) throw new Error('Failed to send notification');
+
+                showStatus(scheduledTime ?
+                    "Notification scheduled successfully!" :
+                    "Notification sent successfully!");
+            } catch (error) {
+                showStatus(error.message, true);
+            }
+        });
+
+        // 수신된 메시지 처리
         onMessage(messaging, (payload) => {
-            console.log("Message received. ", payload);
-            const { title, body } = payload.notification;
-            new Notification(title, { body });
+            console.log("Message received:", payload);
+            showStatus("New message received: " + payload.notification.title);
         });
     </script>
-</head>
-
-<body>
-    <h1>FCM Push Notification Example</h1>
-    <button id="requestPermission">Enable Notifications</button>
 </body>
 
 </html>

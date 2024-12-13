@@ -1,6 +1,6 @@
 importScripts('https://www.gstatic.com/firebasejs/10.3.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.3.0/firebase-messaging-compat.js');
-importScripts('./firebase-config-sw.js');
+importScripts('../config/firebase-config-sw.js');
 
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();

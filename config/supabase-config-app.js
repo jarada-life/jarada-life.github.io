@@ -1,9 +1,4 @@
-export const supabaseConfig = {
-    projectUrl: 'https://hkwmpafwndphdhodqizb.supabase.co', // https://[PROJECT_ID].supabase.co
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhrd21wYWZ3bmRwaGRob2RxaXpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzIwOTc5ODgsImV4cCI6MjA0NzY3Mzk4OH0.MSPKwJoSN5OCvDljUXEliCbiNpFQkT6BfAyw2F-2yis',
-    tableName: 'pm_push_tokens',  // Supabase에 생성한 테이블 이름
-    schema: 'woorytools',  // 예: 'push_notification'
-};
+import { supabaseConfig } from "./supabaseConfig";
 
 // Supabase API 호출을 위한 유틸리티 함수
 export async function saveTokenToSupabase(token, userId = 'anonymous') {

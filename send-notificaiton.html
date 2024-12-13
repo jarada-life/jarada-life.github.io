@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Push Notification Example</title>
+    <style>
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .input-group input, .input-group textarea {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        #notificationForm {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+    </style>
+    <script type="module">
+        import { firebaseConfig } from './firebase-config-app.js';
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.3.0/firebase-app.js';
+        import { getMessaging, getToken, onMessage } from 'https://www.gstatic.com/firebasejs/10.3.0/firebase-messaging.js';
+        import { saveTokenToSupabase } from '../config/supabase-config-app.js';
+        import { supabaseConfig } from '../config/supabaseConfig.js';
+
+        // Service Worker 등록
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./firebase-messaging-sw.js')
+                .then(registration => {
+                    console.log('Service Worker registered:', registration);
+                })
+                .catch(err => {
+                    console.error('Service Worker registration failed:', err);
+                });
+        }
+
+        // Firebase 초기화
+        const app = initializeApp(firebaseConfig);
+        const messaging = getMessaging(app);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById("requestPermission").addEventListener("click", async () => {
+                try {
+                    const permission = await Notification.requestPermission();
+                    if (permission === 'granted') {
+                        await navigator.serviceWorker.ready;
+                        
+                        const token = await getToken(messaging, {
+                            vapidKey: firebaseConfig.vapid
+                        });
+                        
+                        // Supabase에 토큰 저장
+                        await saveTokenToSupabase(token);
+                        console.log("Token saved to Supabase!");
+                    }
+                } catch (err) {
+                    console.error("Error:", err);
+                }
+            });
+
+            // 알림 전송 폼 이벤트 처리
+            document.getElementById("sendNotification").addEventListener("click", async () => {
+                const title = document.getElementById("notificationTitle").value;
+                const body = document.getElementById("notificationBody").value;
+
+                if (!title || !body) {
+                    alert("제목과 내용을 모두 입력해주세요.");
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`${supabaseConfig.projectUrl}/functions/v1/send-notification`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${supabaseConfig.anonKey}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ title, body })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to send notification');
+                    }
+
+                    const result = await response.json();
+                    alert("알림이 성공적으로 전송되었습니다!");
+                    
+                    // 입력 필드 초기화
+                    document.getElementById("notificationTitle").value = '';
+                    document.getElementById("notificationBody").value = '';
+                } catch (error) {
+                    console.error('Error sending notification:', error);
+                    alert("알림 전송에 실패했습니다.");
+                }
+            });
+        });
+
+        onMessage(messaging, (payload) => {
+            console.log("Message received. ", payload);
+            const { title, body } = payload.notification;
+            new Notification(title, { body });
+        });
+    </script>
+</head>
+
+<body>
+    <div class="container">
+        <h1>FCM Push Notification Example</h1>
+        <button id="requestPermission">Enable Notifications</button>
+
+        <div id="notificationForm">
+            <h2>알림 보내기</h2>
+            <div class="input-group">
+                <label for="notificationTitle">제목</label>
+                <input type="text" id="notificationTitle" placeholder="알림 제목을 입력하세요">
+            </div>
+            <div class="input-group">
+                <label for="notificationBody">내용</label>
+                <textarea id="notificationBody" rows="4" placeholder="알림 내용을 입력하세요"></textarea>
+            </div>
+            <button id="sendNotification">알림 보내기</button>
+        </div>
+    </div>
+</body>
+
+</html>
