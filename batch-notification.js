@@ -1,5 +1,5 @@
 // batch-notification.js
-import { supabaseConfig } from './config/supabase-config-app.js';
+import { supabaseConfig } from './config/supabaseConfig.js';
 import { firebaseConfig } from './config/firebase-config-app.js';
 
 // Supabase에서 모든 토큰 가져오기

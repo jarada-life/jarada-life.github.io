@@ -1,4 +1,4 @@
-import { supabaseConfig } from "./supabaseConfig";
+import { supabaseConfig } from "./supabaseConfig.js";
 
 // Supabase API 호출을 위한 유틸리티 함수
 export async function saveTokenToSupabase(token, userId = 'anonymous') {
