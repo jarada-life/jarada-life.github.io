@@ -11,23 +11,29 @@
             margin: 20px auto;
             padding: 20px;
         }
+
         .input-group {
             margin-bottom: 15px;
         }
+
         .input-group label {
             display: block;
             margin-bottom: 5px;
         }
-        .input-group input, .input-group textarea {
+
+        .input-group input,
+        .input-group textarea {
             width: 100%;
             padding: 8px;
             margin-bottom: 10px;
         }
+
         button {
             padding: 10px 20px;
             margin: 5px;
             cursor: pointer;
         }
+
         #notificationForm {
             margin-top: 20px;
             padding: 20px;
@@ -63,11 +69,11 @@
                     const permission = await Notification.requestPermission();
                     if (permission === 'granted') {
                         await navigator.serviceWorker.ready;
-                        
+
                         const token = await getToken(messaging, {
                             vapidKey: firebaseConfig.vapid
                         });
-                        
+
                         // Supabase에 토큰 저장
                         await saveTokenToSupabase(token);
                         console.log("Token saved to Supabase!");
@@ -92,7 +98,9 @@
                         method: 'POST',
                         headers: {
                             'Authorization': `Bearer ${supabaseConfig.anonKey}`,
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/json',
+                            'apikey': supabaseConfig.anonKey,         // 추가
+                            'Authorization': `Bearer ${supabaseConfig.anonKey}`  // Bearer 추가
                         },
                         body: JSON.stringify({ title, body })
                     });
@@ -103,7 +111,7 @@
 
                     const result = await response.json();
                     alert("알림이 성공적으로 전송되었습니다!");
-                    
+
                     // 입력 필드 초기화
                     document.getElementById("notificationTitle").value = '';
                     document.getElementById("notificationBody").value = '';
