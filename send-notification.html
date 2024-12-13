@@ -97,10 +97,9 @@
                     const response = await fetch(`${supabaseConfig.projectUrl}/functions/v1/send-notification`, {
                         method: 'POST',
                         headers: {
-                            'Authorization': `Bearer ${supabaseConfig.anonKey}`,
                             'Content-Type': 'application/json',
-                            'apikey': supabaseConfig.anonKey,         // 추가
-                            'Authorization': `Bearer ${supabaseConfig.anonKey}`  // Bearer 추가
+                            'Authorization': `Bearer ${supabaseConfig.anonKey}`,
+                            'apikey': supabaseConfig.anonKey  // Bearer 추가
                         },
                         body: JSON.stringify({ title, body })
                     });
