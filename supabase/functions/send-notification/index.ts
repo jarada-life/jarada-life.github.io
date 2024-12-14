@@ -1,74 +1,105 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
+import { create, verify } from 'https://deno.land/x/djwt@v3.0.2/mod.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-async function generateJWT(serviceAccount) {
-  try {
-    const now = Math.floor(Date.now() / 1000);
-    const payload = {
+const SCOPES = ['https://www.googleapis.com/auth/firebase.messaging']
+
+// PEM 형식의 private key를 importKey를 통해 CryptoKey로 변환
+async function pemToKey(pem: string): Promise<CryptoKey> {
+  // PEM 헤더/푸터 제거 및 base64 디코딩
+  const pemHeader = '-----BEGIN PRIVATE KEY-----';
+  const pemFooter = '-----END PRIVATE KEY-----';
+  const pemContents = pem
+    .replace(pemHeader, '')
+    .replace(pemFooter, '')
+    .replace(/\s/g, '');
+
+  // base64 디코딩
+  const binaryDer = Uint8Array.from(atob(pemContents), c => c.charCodeAt(0));
+
+  // CryptoKey로 변환
+  return await crypto.subtle.importKey(
+    'pkcs8',
+    binaryDer,
+    {
+      name: 'RSASSA-PKCS1-v1_5',
+      hash: 'SHA-256',
+    },
+    true,
+    ['sign']
+  );
+}
+
+// // JWT 생성 부분
+// const now = Math.floor(Date.now() / 1000);
+// const key = await pemToKey(serviceAccount.private_key);
+
+// const jwt = await create(
+//   { alg: 'RS256', typ: 'JWT' },
+//   {
+//     iss: serviceAccount.client_email,
+//     scope: SCOPES.join(' '),
+//     aud: 'https://oauth2.googleapis.com/token',
+//     exp: now + 3600,
+//     iat: now
+//   },
+//   key  // 변환된 CryptoKey 사용
+// );
+
+async function getAccessToken(serviceAccount) {
+
+
+  // // JWT 생성
+  // const jwt = await create(
+  //   { alg: 'RS256', typ: 'JWT' },
+  //   {
+  //     iss: serviceAccount.client_email,
+  //     scope: SCOPES.join(' '),
+  //     aud: 'https://oauth2.googleapis.com/token',
+  //     exp: now + 3600,
+  //     iat: now
+  //   },
+  //   serviceAccount.private_key
+  // )
+
+  // JWT 생성 부분
+  const now = Math.floor(Date.now() / 1000);
+  const key = await pemToKey(serviceAccount.private_key);
+
+  const jwt = await create(
+    { alg: 'RS256', typ: 'JWT' },
+    {
       iss: serviceAccount.client_email,
-      sub: serviceAccount.client_email,
+      scope: SCOPES.join(' '),
       aud: 'https://oauth2.googleapis.com/token',
-      iat: now,
       exp: now + 3600,
-      scope: 'https://www.googleapis.com/auth/firebase.messaging'
-    };
+      iat: now
+    },
+    key  // 변환된 CryptoKey 사용
+  );
+  // OAuth2 토큰 교환
+  const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({
+      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+      assertion: jwt
+    })
+  })
 
-    const header = {
-      alg: 'RS256',
-      typ: 'JWT',
-      kid: serviceAccount.private_key_id
-    };
-
-    const encodedHeader = btoa(JSON.stringify(header))
-      .replace(/=/g, '')
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_');
-
-    const encodedPayload = btoa(JSON.stringify(payload))
-      .replace(/=/g, '')
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_');
-
-    // private key 정리
-    const privateKey = serviceAccount.private_key
-      .replace(/\\n/g, '\n')
-      .trim();
-
-    // CryptoKey 생성
-    const binaryKey = await crypto.subtle.importKey(
-      'pkcs8',
-      new TextEncoder().encode(privateKey),
-      {
-        name: 'RSASSA-PKCS1-v1_5',
-        hash: 'SHA-256',
-      },
-      false,
-      ['sign']
-    );
-
-    // 서명
-    const signatureInput = `${encodedHeader}.${encodedPayload}`;
-    const signature = await crypto.subtle.sign(
-      'RSASSA-PKCS1-v1_5',
-      binaryKey,
-      new TextEncoder().encode(signatureInput)
-    );
-
-    const encodedSignature = btoa(String.fromCharCode(...new Uint8Array(signature)))
-      .replace(/=/g, '')
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_');
-
-    return `${encodedHeader}.${encodedPayload}.${encodedSignature}`;
-  } catch (error) {
-    console.error('JWT Generation Error:', error);
-    throw error;
+  if (!tokenResponse.ok) {
+    throw new Error('Failed to get access token')
   }
+
+  const { access_token } = await tokenResponse.json()
+  return access_token
 }
 
 serve(async (req) => {
@@ -103,29 +134,9 @@ serve(async (req) => {
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
-
     const serviceAccount = JSON.parse(Deno.env.get('FIREBASE_SERVICE_ACCOUNT') ?? '{}')
-    
-    // OAuth2 토큰 얻기
-    const jwt = await generateJWT(serviceAccount);
-    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-        assertion: jwt
-      })
-    })
-
-    if (!tokenResponse.ok) {
-      const error = await tokenResponse.json()
-      console.error('Token error:', error)
-      throw new Error('Failed to get access token')
-    }
-
-    const { access_token } = await tokenResponse.json()
+    console.log(serviceAccount)
+    const accessToken = await getAccessToken(serviceAccount)
     console.log('Got access token')
 
     // FCM 메시지 전송
@@ -133,7 +144,7 @@ serve(async (req) => {
 
     for (let i = 0; i < tokens.length; i += 500) {
       const chunk = tokens.slice(i, i + 500)
-      
+
       for (const token of chunk) {
         const message = {
           message: {
@@ -148,7 +159,7 @@ serve(async (req) => {
         const response = await fetch(fcmEndpoint, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${access_token}`,
+            'Authorization': `Bearer ${accessToken}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(message)
