@@ -12,174 +12,91 @@ serve(async (req) => {
   }
 
   try {
-    const { title, body, scheduledTime } = await req.json()
-
-    if (!title || !body) {
-        return new Response(
-            JSON.stringify({ error: 'Title and body are required' }),
-            { 
-                status: 400,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            }
-        )
-    }
-
+    const { title, body } = await req.json()
+    console.log('Received request:', { title, body })
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    if (scheduledTime) {
-      const { error } = await supabase
-        .from('pm_scheduled_notifications')
-        .insert({
-          title,
-          body,
-          scheduled_time: scheduledTime,
-          status: 'pending'
-        })
+    // FCM 토큰 조회
+    const { data: tokens } = await supabase
+      .from('push_tokens')
+      .select('fcm_token')
 
-      if (error) throw error
-      
+    console.log('Retrieved tokens:', tokens?.length ?? 0)
+
+    if (!tokens || tokens.length === 0) {
       return new Response(
-        JSON.stringify({ message: 'Notification scheduled' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    } else {
-      const { data: tokens } = await supabase
-        .from('push_tokens')
-        .select('fcm_token')
-
-      const accessToken = await getFirebaseAccessToken()
-      await sendNotifications(tokens, title, body, accessToken)
-
-      return new Response(
-        JSON.stringify({ message: 'Notification sent' }),
+        JSON.stringify({ message: 'No tokens available' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
-  } catch (error) {
-    console.error('Error details:', error)  // 로그 추가
-    return new Response(
-        JSON.stringify({ error: error.message }),
-        { 
-            status: 400,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-    )
-  }
-})
 
-async function getFirebaseAccessToken() {
-  const serviceAccount = JSON.parse(Deno.env.get('FIREBASE_SERVICE_ACCOUNT') ?? '{}')
-  
-  const now = Math.floor(Date.now() / 1000)
-  const jwtClaims = {
-    iss: serviceAccount.client_email,
-    sub: serviceAccount.client_email,
-    aud: 'https://oauth2.googleapis.com/token',
-    iat: now,
-    exp: now + 3600,
-    scope: 'https://www.googleapis.com/auth/firebase.messaging'
-  }
+    // Firebase 프로젝트 정보 가져오기
+    const serviceAccount = JSON.parse(Deno.env.get('FIREBASE_SERVICE_ACCOUNT') ?? '{}')
+    const projectId = serviceAccount.project_id
 
-  // JWT 서명을 위한 헤더
-  const header = {
-    alg: 'RS256',
-    typ: 'JWT',
-    kid: serviceAccount.private_key_id
-  }
-
-  // JWT 생성
-  const encoder = new TextEncoder()
-  const headerBase64 = btoa(JSON.stringify(header))
-    .replace(/=/g, '')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-  const claimsBase64 = btoa(JSON.stringify(jwtClaims))
-    .replace(/=/g, '')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-
-  // 서명 생성
-  const key = await crypto.subtle.importKey(
-    'pkcs8',
-    new TextEncoder().encode(serviceAccount.private_key),
-    {
-      name: 'RSASSA-PKCS1-v1_5',
-      hash: 'SHA-256',
-    },
-    false,
-    ['sign']
-  )
-
-  const signature = await crypto.subtle.sign(
-    'RSASSA-PKCS1-v1_5',
-    key,
-    encoder.encode(`${headerBase64}.${claimsBase64}`)
-  )
-
-  const signatureBase64 = btoa(String.fromCharCode(...new Uint8Array(signature)))
-    .replace(/=/g, '')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-
-  const jwt = `${headerBase64}.${claimsBase64}.${signatureBase64}`
-
-  // OAuth2 토큰 요청
-  const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({
-      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-      assertion: jwt
+    // OAuth2 토큰 얻기
+    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+        assertion: serviceAccount.client_email
+      })
     })
-  })
 
-  const { access_token } = await tokenResponse.json()
-  return access_token
-}
+    const { access_token } = await tokenResponse.json()
 
-async function sendNotifications(tokens, title, body, accessToken) {
-  const projectId = JSON.parse(Deno.env.get('FIREBASE_SERVICE_ACCOUNT') ?? '{}').project_id
+    // FCM 메시지 전송
+    const fcmEndpoint = `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`
 
-  // FCM v1 API 엔드포인트
-  const fcmEndpoint = `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`
+    // 토큰을 500개씩 나누어 처리
+    for (let i = 0; i < tokens.length; i += 500) {
+      const chunk = tokens.slice(i, i + 500)
+      
+      for (const token of chunk) {
+        const message = {
+          message: {
+            token: token.fcm_token,
+            notification: {
+              title,
+              body
+            }
+          }
+        }
 
-  // 토큰 배열을 청크로 나누기 (FCM은 한 번에 500개까지만 처리)
-  const chunkSize = 500
-  const tokenChunks = []
-  for (let i = 0; i < tokens.length; i += chunkSize) {
-    tokenChunks.push(tokens.slice(i, i + chunkSize))
-  }
+        const response = await fetch(fcmEndpoint, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(message)
+        })
 
-  // 각 청크별로 메시지 전송
-  for (const chunk of tokenChunks) {
-    const message = {
-      message: {
-        notification: {
-          title,
-          body
-        },
-        tokens: chunk.map(t => t.fcm_token)
+        if (!response.ok) {
+          console.error('FCM Error for token:', token.fcm_token)
+          const error = await response.json()
+          console.error('FCM Error details:', error)
+        }
       }
     }
 
-    const response = await fetch(fcmEndpoint, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(message)
-    })
+    return new Response(
+      JSON.stringify({ message: 'Notifications sent' }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
 
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(`Failed to send FCM message: ${JSON.stringify(error)}`)
-    }
+  } catch (error) {
+    console.error('Error details:', error)
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
   }
-}
+})
