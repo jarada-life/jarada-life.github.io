@@ -12,6 +12,14 @@ grant usage on schema woorytools to anon, authenticated;
 grant select on table woorytools.pm_push_tokens to anon;
 grant select, insert, update, delete on table woorytools.pm_push_tokens to authenticated;
 
+-- 스키마 접근 권한 부여
+GRANT USAGE ON SCHEMA woorytools TO service_role;
+GRANT USAGE ON SCHEMA woorytools TO anon;
+
+-- 테이블 접근 권한 부여
+GRANT SELECT ON woorytools.pm_push_tokens TO service_role;
+GRANT SELECT ON woorytools.pm_push_tokens TO anon;
+
 -- pm 스키마의 scheduled_notifications 테이블 생성
 CREATE TABLE woorytools.pm_scheduled_notifications (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,

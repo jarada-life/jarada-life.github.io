@@ -6,6 +6,59 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// JWT 생성 함수
+async function generateJWT(serviceAccount) {
+  const now = Math.floor(Date.now() / 1000);
+  const payload = {
+    iss: serviceAccount.client_email,
+    sub: serviceAccount.client_email,
+    aud: 'https://oauth2.googleapis.com/token',
+    iat: now,
+    exp: now + 3600,
+    scope: 'https://www.googleapis.com/auth/firebase.messaging'
+  };
+
+  const header = {
+    alg: 'RS256',
+    typ: 'JWT',
+    kid: serviceAccount.private_key_id
+  };
+
+  const encodedHeader = btoa(JSON.stringify(header))
+    .replace(/=/g, '')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_');
+
+  const encodedPayload = btoa(JSON.stringify(payload))
+    .replace(/=/g, '')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_');
+
+  const signatureInput = `${encodedHeader}.${encodedPayload}`;
+  const encoder = new TextEncoder();
+  const data = encoder.encode(signatureInput);
+
+  // private key를 정리하고 Base64로 디코딩
+  const privateKey = serviceAccount.private_key
+    .replace('-----BEGIN PRIVATE KEY-----\n', '')
+    .replace('\n-----END PRIVATE KEY-----\n', '')
+    .replace(/\\n/g, '');
+  
+  const binaryKey = atob(privateKey);
+  const signature = await crypto.subtle.sign(
+    'RSASSA-PKCS1-v1_5',
+    binaryKey,
+    data
+  );
+
+  const encodedSignature = btoa(String.fromCharCode(...new Uint8Array(signature)))
+    .replace(/=/g, '')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_');
+
+  return `${encodedHeader}.${encodedPayload}.${encodedSignature}`;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -17,13 +70,18 @@ serve(async (req) => {
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      { db: { schema: 'woorytools' } }
     )
 
-    // FCM 토큰 조회
-    const { data: tokens } = await supabase
-      .from('push_tokens')
+    const { data: tokens, error: dbError } = await supabase
+      .from('pm_push_tokens')
       .select('fcm_token')
+
+    if (dbError) {
+      console.error('Database error:', dbError)
+      throw dbError
+    }
 
     console.log('Retrieved tokens:', tokens?.length ?? 0)
 
@@ -34,11 +92,10 @@ serve(async (req) => {
       )
     }
 
-    // Firebase 프로젝트 정보 가져오기
     const serviceAccount = JSON.parse(Deno.env.get('FIREBASE_SERVICE_ACCOUNT') ?? '{}')
-    const projectId = serviceAccount.project_id
-
+    
     // OAuth2 토큰 얻기
+    const jwt = await generateJWT(serviceAccount);
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: {
@@ -46,16 +103,22 @@ serve(async (req) => {
       },
       body: new URLSearchParams({
         grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-        assertion: serviceAccount.client_email
+        assertion: jwt
       })
     })
 
+    if (!tokenResponse.ok) {
+      const error = await tokenResponse.json()
+      console.error('Token error:', error)
+      throw new Error('Failed to get access token')
+    }
+
     const { access_token } = await tokenResponse.json()
+    console.log('Got access token')
 
     // FCM 메시지 전송
-    const fcmEndpoint = `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`
+    const fcmEndpoint = `https://fcm.googleapis.com/v1/projects/${serviceAccount.project_id}/messages:send`
 
-    // 토큰을 500개씩 나누어 처리
     for (let i = 0; i < tokens.length; i += 500) {
       const chunk = tokens.slice(i, i + 500)
       
@@ -83,6 +146,8 @@ serve(async (req) => {
           console.error('FCM Error for token:', token.fcm_token)
           const error = await response.json()
           console.error('FCM Error details:', error)
+        } else {
+          console.log('Successfully sent message to token:', token.fcm_token)
         }
       }
     }
