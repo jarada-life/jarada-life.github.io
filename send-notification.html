@@ -110,6 +110,7 @@
 
                     const result = await response.json();
                     alert("알림이 성공적으로 전송되었습니다!");
+                    console.log(result.message);
 
                     // 입력 필드 초기화
                     document.getElementById("notificationTitle").value = '';
