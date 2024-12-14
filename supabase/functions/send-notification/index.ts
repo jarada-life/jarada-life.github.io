@@ -6,57 +6,69 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// JWT 생성 함수
 async function generateJWT(serviceAccount) {
-  const now = Math.floor(Date.now() / 1000);
-  const payload = {
-    iss: serviceAccount.client_email,
-    sub: serviceAccount.client_email,
-    aud: 'https://oauth2.googleapis.com/token',
-    iat: now,
-    exp: now + 3600,
-    scope: 'https://www.googleapis.com/auth/firebase.messaging'
-  };
+  try {
+    const now = Math.floor(Date.now() / 1000);
+    const payload = {
+      iss: serviceAccount.client_email,
+      sub: serviceAccount.client_email,
+      aud: 'https://oauth2.googleapis.com/token',
+      iat: now,
+      exp: now + 3600,
+      scope: 'https://www.googleapis.com/auth/firebase.messaging'
+    };
 
-  const header = {
-    alg: 'RS256',
-    typ: 'JWT',
-    kid: serviceAccount.private_key_id
-  };
+    const header = {
+      alg: 'RS256',
+      typ: 'JWT',
+      kid: serviceAccount.private_key_id
+    };
 
-  const encodedHeader = btoa(JSON.stringify(header))
-    .replace(/=/g, '')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_');
+    const encodedHeader = btoa(JSON.stringify(header))
+      .replace(/=/g, '')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_');
 
-  const encodedPayload = btoa(JSON.stringify(payload))
-    .replace(/=/g, '')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_');
+    const encodedPayload = btoa(JSON.stringify(payload))
+      .replace(/=/g, '')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_');
 
-  const signatureInput = `${encodedHeader}.${encodedPayload}`;
-  const encoder = new TextEncoder();
-  const data = encoder.encode(signatureInput);
+    // private key 정리
+    const privateKey = serviceAccount.private_key
+      .replace(/\\n/g, '\n')
+      .trim();
 
-  // private key를 정리하고 Base64로 디코딩
-  const privateKey = serviceAccount.private_key
-    .replace('-----BEGIN PRIVATE KEY-----\n', '')
-    .replace('\n-----END PRIVATE KEY-----\n', '')
-    .replace(/\\n/g, '');
-  
-  const binaryKey = atob(privateKey);
-  const signature = await crypto.subtle.sign(
-    'RSASSA-PKCS1-v1_5',
-    binaryKey,
-    data
-  );
+    // CryptoKey 생성
+    const binaryKey = await crypto.subtle.importKey(
+      'pkcs8',
+      new TextEncoder().encode(privateKey),
+      {
+        name: 'RSASSA-PKCS1-v1_5',
+        hash: 'SHA-256',
+      },
+      false,
+      ['sign']
+    );
 
-  const encodedSignature = btoa(String.fromCharCode(...new Uint8Array(signature)))
-    .replace(/=/g, '')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_');
+    // 서명
+    const signatureInput = `${encodedHeader}.${encodedPayload}`;
+    const signature = await crypto.subtle.sign(
+      'RSASSA-PKCS1-v1_5',
+      binaryKey,
+      new TextEncoder().encode(signatureInput)
+    );
 
-  return `${encodedHeader}.${encodedPayload}.${encodedSignature}`;
+    const encodedSignature = btoa(String.fromCharCode(...new Uint8Array(signature)))
+      .replace(/=/g, '')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_');
+
+    return `${encodedHeader}.${encodedPayload}.${encodedSignature}`;
+  } catch (error) {
+    console.error('JWT Generation Error:', error);
+    throw error;
+  }
 }
 
 serve(async (req) => {
