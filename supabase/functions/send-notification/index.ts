@@ -152,6 +152,14 @@ serve(async (req) => {
             notification: {
               title,
               body
+            },
+            android: {
+              priority: 'high'
+            },
+            apns: {
+              headers: {
+                'apns-priority': '10'
+              }
             }
           }
         }
