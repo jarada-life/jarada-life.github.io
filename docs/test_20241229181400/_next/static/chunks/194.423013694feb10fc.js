@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[194],{83194:(e,t,u)=>{u.d(t,{A:()=>c,I:()=>a});var n=u(12115),r=u(95155);let s=n.createContext(),a=()=>n.useContext(s)??!1,c=function({value:e,...t}){return(0,r.jsx)(s.Provider,{value:e??!0,...t})}}}]);
