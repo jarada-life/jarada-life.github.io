@@ -1,0 +1,16 @@
+# *
+User-agent: *
+Allow: /
+Allow: /../tools/*
+
+# *
+User-agent: *
+Disallow: /../tools_*
+Disallow: /../temp*
+Disallow: /../temp*/*
+
+# Host
+Host: https://jarada.life/tools
+
+# Sitemaps
+Sitemap: https://jarada.life/tools/sitemap.xml
