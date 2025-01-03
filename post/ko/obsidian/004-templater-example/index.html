@@ -1,0 +1,524 @@
+<!DOCTYPE html><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"><!-- Global Metadata --><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><meta name="generator" content="Astro v3.2.3"><!-- Primary Meta Tags --><title>Obsidian Templater + Google calendar + Tasks 플러그인 예제</title><meta name="title" content="Obsidian Templater + Google calendar + Tasks 플러그인 예제"><meta name="description" content="옵시디언의 템플레이터(Templater)를 이용해 구글 캘린더의 일정을 긁어와서 뿌려주는 기능을 소개드립니다."><!-- Open Graph / Facebook --><meta property="og:type" content="website"><meta property="og:url" content="https://jarada.life/post/ko/obsidian/004-templater-example/"><meta property="og:title" content="Obsidian Templater + Google calendar + Tasks 플러그인 예제"><meta property="og:description" content="옵시디언의 템플레이터(Templater)를 이용해 구글 캘린더의 일정을 긁어와서 뿌려주는 기능을 소개드립니다."><meta property="og:image" content="https://jarada.life/placeholder-social.jpg"><!-- Twitter --><meta property="twitter:card" content="summary_large_image"><meta property="twitter:url" content="https://jarada.life/post/ko/obsidian/004-templater-example/"><meta property="twitter:title" content="Obsidian Templater + Google calendar + Tasks 플러그인 예제"><meta property="twitter:description" content="옵시디언의 템플레이터(Templater)를 이용해 구글 캘린더의 일정을 긁어와서 뿌려주는 기능을 소개드립니다."><meta property="twitter:image" content="https://jarada.life/placeholder-social.jpg"><meta name="astro-view-transitions-enabled" content="true"><meta name="astro-view-transitions-fallback" content="swap"><script>
+  const setDarkMode = () => {
+    const theme = (() => {
+    if (typeof localStorage !== 'undefined' && localStorage.getItem('theme')) {
+      return localStorage.getItem('theme')
+    }
+    if (window.matchMedia('(prefers-color-scheme:dark)').matches) {
+      return 'dark'
+    }
+    return 'light'
+  })()
+    if (theme === 'light') {
+      document.documentElement.classList.remove('dark')
+    } else {
+      document.documentElement.classList.add('dark')
+    }
+  }
+  setDarkMode()
+  document.addEventListener('astro:after-swap', setDarkMode);
+</script><link rel="stylesheet" href="/post/_astro/About.531d6b1d.css" />
+<link rel="stylesheet" href="/post/_astro/_tag_.3d0b0689.css" />
+<style>@import"https://fonts.googleapis.com/css2?family=VT323&display=swap";code[class*=language-],pre[class*=language-]{text-align:left;white-space:pre;word-spacing:normal;word-break:normal;word-wrap:normal;color:#cdd6f4;background:#232136;font-size:1em;line-height:1.5em;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-hyphens:none;hyphens:none}code[class*=language-]::-moz-selection,pre[class*=language-]::-moz-selection,code[class*=language-] ::-moz-selection,pre[class*=language-] ::-moz-selection{background:#393552}code[class*=language-]::-moz-selection,pre[class*=language-]::-moz-selection,code[class*=language-] ::-moz-selection,pre[class*=language-] ::-moz-selection,code[class*=language-]::selection,pre[class*=language-]::selection,code[class*=language-] ::selection,pre[class*=language-] ::selection{background:#393552}:not(pre)>code[class*=language-]{white-space:normal;border-radius:.2em;padding:.1em}pre[class*=language-]{overflow:auto;position:relative;margin:.5em 0;padding:2.2em 1em 1.25em}.token.comment,.token.prolog,.token.doctype,.token.cdata{color:#59546d}.token.punctuation{color:#cdd6f4}.token.namespace{opacity:.7}.token.property,.token.tag,.token.boolean,.token.number,.token.constant,.token.symbol,.token.deleted{color:#eb6f92}.token.selector,.token.attr-name,.token.string,.token.char,.token.builtin,.token.inserted{color:#9ccfd8}.token.operator,.token.entity,.token.url,.token.variable{color:#f6c177}.token.atrule,.token.attr-value,.token.keyword{color:#c4a7e7}.token.function,.token.class-name{color:#f4bfdd}.token.regex,.token.important{color:#cba6f7}.token.important,.token.bold{font-weight:700}.token.italic{font-style:italic}.token.entity{cursor:help}.token.class,.token.hexcode,.token.unit{color:#f6c177}.token.pseudo-class,.token.pseudo-element,.token.attribute{color:#a5e844}
+</style><script type="module" src="/post/_astro/hoisted.116ee871.js"></script><body class="bg-monstera-bg text-monstera-text break-words leading-6 transition-colors duration-500"><header class="fixed w-full p-2 z-20 backdrop-blur-md"><div class="mx-auto"><nav class="flex items-center gap-6 text-base justify-center"><a href="/"><h2 class="font-semibold tracking-tighter p-2 font-slab text-lg text-monstera-accent">Jaljara</h2></a><div class="flex items-center gap-6 "><a href="https://jarada.life/tools/"><h3 class="font-semibold tracking-tighter p-2 font-slab text-lg text-monstera-text">Tools</h3></a><a href="/post/about/"><h3 class="font-semibold tracking-tighter p-2 font-slab text-lg text-monstera-text">About</h3></a><style>astro-island,astro-slot,astro-static-slot{display:contents}</style><script>(()=>{var r=(i,c,s)=>{let n=async()=>{await(await i())()},t=new IntersectionObserver(e=>{for(let o of e)if(o.isIntersecting){t.disconnect(),n();break}});for(let e of s.children)t.observe(e)};(self.Astro||(self.Astro={})).visible=r;window.dispatchEvent(new Event("astro:visible"));})();;(()=>{var b=Object.defineProperty;var f=(c,o,i)=>o in c?b(c,o,{enumerable:!0,configurable:!0,writable:!0,value:i}):c[o]=i;var l=(c,o,i)=>(f(c,typeof o!="symbol"?o+"":o,i),i);var p;{let c={0:t=>m(t),1:t=>i(t),2:t=>new RegExp(t),3:t=>new Date(t),4:t=>new Map(i(t)),5:t=>new Set(i(t)),6:t=>BigInt(t),7:t=>new URL(t),8:t=>new Uint8Array(t),9:t=>new Uint16Array(t),10:t=>new Uint32Array(t)},o=t=>{let[e,r]=t;return e in c?c[e](r):void 0},i=t=>t.map(o),m=t=>typeof t!="object"||t===null?t:Object.fromEntries(Object.entries(t).map(([e,r])=>[e,o(r)]));customElements.get("astro-island")||customElements.define("astro-island",(p=class extends HTMLElement{constructor(){super(...arguments);l(this,"Component");l(this,"hydrator");l(this,"hydrate",async()=>{var d;if(!this.hydrator||!this.isConnected)return;let e=(d=this.parentElement)==null?void 0:d.closest("astro-island[ssr]");if(e){e.addEventListener("astro:hydrate",this.hydrate,{once:!0});return}let r=this.querySelectorAll("astro-slot"),a={},h=this.querySelectorAll("template[data-astro-template]");for(let n of h){let s=n.closest(this.tagName);s!=null&&s.isSameNode(this)&&(a[n.getAttribute("data-astro-template")||"default"]=n.innerHTML,n.remove())}for(let n of r){let s=n.closest(this.tagName);s!=null&&s.isSameNode(this)&&(a[n.getAttribute("name")||"default"]=n.innerHTML)}let u;try{u=this.hasAttribute("props")?m(JSON.parse(this.getAttribute("props"))):{}}catch(n){let s=this.getAttribute("component-url")||"<unknown>",y=this.getAttribute("component-export");throw y&&(s+=` (export ${y})`),console.error(`[hydrate] Error parsing props for component ${s}`,this.getAttribute("props"),n),n}await this.hydrator(this)(this.Component,u,a,{client:this.getAttribute("client")}),this.removeAttribute("ssr"),this.dispatchEvent(new CustomEvent("astro:hydrate"))});l(this,"unmount",()=>{this.isConnected||this.dispatchEvent(new CustomEvent("astro:unmount"))})}disconnectedCallback(){document.removeEventListener("astro:after-swap",this.unmount),document.addEventListener("astro:after-swap",this.unmount,{once:!0})}connectedCallback(){if(!this.hasAttribute("await-children")||document.readyState==="interactive"||document.readyState==="complete")this.childrenConnectedCallback();else{let e=()=>{document.removeEventListener("DOMContentLoaded",e),r.disconnect(),this.childrenConnectedCallback()},r=new MutationObserver(()=>{var a;((a=this.lastChild)==null?void 0:a.nodeType)===Node.COMMENT_NODE&&this.lastChild.nodeValue==="astro:end"&&(this.lastChild.remove(),e())});r.observe(this,{childList:!0}),document.addEventListener("DOMContentLoaded",e)}}async childrenConnectedCallback(){let e=this.getAttribute("before-hydration-url");e&&await import(e),this.start()}start(){let e=JSON.parse(this.getAttribute("opts")),r=this.getAttribute("client");if(Astro[r]===void 0){window.addEventListener(`astro:${r}`,()=>this.start(),{once:!0});return}Astro[r](async()=>{let a=this.getAttribute("renderer-url"),[h,{default:u}]=await Promise.all([import(this.getAttribute("component-url")),a?import(a):()=>()=>{}]),d=this.getAttribute("component-export")||"default";if(!d.includes("."))this.Component=h[d];else{this.Component=h;for(let n of d.split("."))this.Component=this.Component[n]}return this.hydrator=u,this.hydrate},e,this)}attributeChangedCallback(){this.hydrate()}},l(p,"observedAttributes",["props"]),p))}})();</script><astro-island uid="Z2eTxXL" prefix="r1" component-url="/post/_astro/ThemeToggleButton.1a7e2e25.js" component-export="default" renderer-url="/post/_astro/client.ed23057d.js" props="{}" ssr="" client="visible" opts="{&quot;name&quot;:&quot;ThemeToggle&quot;,&quot;value&quot;:true}" await-children=""><div></div><!--astro:end--></astro-island><astro-island uid="29mfks" prefix="r2" component-url="/post/_astro/DropdownMenu.6017750a.js" component-export="default" renderer-url="/post/_astro/client.ed23057d.js" props="{&quot;tags&quot;:[1,[[0,&quot;#obsidian&quot;],[0,&quot;#dataview&quot;],[0,&quot;#tasks&quot;],[0,&quot;#templater&quot;],[0,&quot;#publish&quot;]]]}" ssr="" client="visible" opts="{&quot;name&quot;:&quot;DropdownMenu&quot;,&quot;value&quot;:true}" await-children=""><div class="relative inline-block text-left" data-headlessui-state=""><div><button aria-label="menu" class="inline-flex justify-center rounded-md border border-monstera-border text-monstera-text p-2 text-sm font-medium shadow-sm hover:bg-monstera-bg focus:outline-none focus:ring-2 focus:ring-monstera-border focus:ring-offset-2 focus:ring-offset-monstera-bg transition-all" id="headlessui-menu-button-:r2R1:" type="button" aria-haspopup="menu" aria-expanded="false" data-headlessui-state=""><svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 512 512" class="h-5 w-5" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path fill="none" stroke-linecap="round" stroke-miterlimit="10" stroke-width="48" d="M88 152h336M88 256h336M88 360h336"></path></svg></button></div></div><!--astro:end--></astro-island></div></nav></div></header><main class="pt-[56px]"><!-- article of each class --><article class="px-8 max-w-3xl  mx-auto pt-5 relative w-full"><div class="mb-8"></div><h1 id="title" class="text-4xl font-bold font-slab text-monstera-accent">Obsidian Templater + Google calendar + Tasks 플러그인 예제</h1><hr class="border-top border-monstera-border my-4"><p class="mb-6 antialiased tracking-tighter-custom">안녕하세요. 오늘은 옵시디언의 템플레이터(Templater)를 이용해 구글 캘린더의 일정을 긁어와서 뿌려주는 기능을 소개드립니다.</p>
+<h2 class="text-3xl font-bold font-slab text-monstera-accent mt-12 md-3 antialiased" id="사전준비">사전준비</h2>
+<h3 class="text-2xl font-bold font-sans mt-12 md-3 antialiased" id="플러그인">플러그인</h3>
+<p class="mb-6 antialiased tracking-tighter-custom"><strong>Templater 플러그인</strong></p>
+<ul class="post-bullets pl-2">
+<li>데일리노트에 스크립트가 적용된 코드를 삽입하여 생성시 자동 실행하기에 유용한 플러그인 입니다.</li>
+<li>이 포스트에서 사용합니다.</li>
+</ul>
+<pre class="language-embed"><code is:raw="" class="language-embed">title: "GitHub - SilentVoid13/Templater: A template plugin for obsidian"
+image: "https://opengraph.githubassets.com/f5160f6b65effee444e51a37f0bc2f0f8e9443929d0ab0be42af0801fb809ad6/SilentVoid13/Templater"
+description: "A template plugin for obsidian. Contribute to SilentVoid13/Templater development by creating an account on GitHub."
+url: "https://github.com/SilentVoid13/Templater"</code></pre>
+<p class="mb-6 antialiased tracking-tighter-custom"><strong>Google Calender 플러그인</strong></p>
+<ul class="post-bullets pl-2">
+<li>API를 통해 연동한 정보를 가져올 수 있는 플러그인 입니다.</li>
+<li>역시 이 포스트를 따라하실 때 필요합니다.</li>
+<li><img src="https://i.imgur.com/FoFMSZy.png" alt="" class="border border-monstera-border rounded-xl mb-6 w-full h-full">
+아래 페이지를 통해서 연동해주세요!</li>
+</ul>
+<pre class="language-embed"><code is:raw="" class="language-embed">title: "Setup"
+image: "https://yukigasai.github.io/obsidian-google-calendar/static/og-image.png"
+description: "The installation of this plugin is a little cumbersome. But after the initial setup you should never have to touch it again. The creation of a public OAUTH client to skip this setup is WIP."
+url: "https://yukigasai.github.io/obsidian-google-calendar/Setup"</code></pre>
+<p class="mb-6 antialiased tracking-tighter-custom"><strong>Tasks 플러그인</strong>
+이 예제를 통해 출력된 일정을 관리하고자 할 때 필요합니다.</p>
+<pre class="language-embed"><code is:raw="" class="language-embed">title: "GitHub - obsidian-tasks-group/obsidian-tasks: Task management for the Obsidian knowledge base."
+image: "https://opengraph.githubassets.com/613f4623358f1f53546e72aa4f7cb36ef061ff08305f03022ffd0a3833c08065/obsidian-tasks-group/obsidian-tasks"
+description: "Task management for the Obsidian knowledge base. Contribute to obsidian-tasks-group/obsidian-tasks development by creating an account on GitHub."
+url: "https://github.com/obsidian-tasks-group/obsidian-tasks"</code></pre>
+<p class="mb-6 antialiased tracking-tighter-custom"><strong>기타</strong>
+저는 일반적으로 데일리 노트를 생성할때, 미리 설정된 포맷에 링크를 걸어두어 잘 사용하지 않지만
+좌측 리본의 ‘Open Today’와 같은 버튼 바로가기로 생성하고 싶으시다면 별도 플러그인을 설치해두시는 것이 좋습니다.
+저는 코어 플러그인의 데일리노트는 사용하지 않고, Pediodic note 플러그인을 사용하고 있습니다.</p>
+<h3 class="text-2xl font-bold font-sans mt-12 md-3 antialiased" id="구글-캘린더-설정">구글 캘린더 설정</h3>
+<p class="mb-6 antialiased tracking-tighter-custom"><img src="https://i.imgur.com/8uqNPvk.png" alt="" class="border border-monstera-border rounded-xl mb-6 w-full h-full"></p>
+<p class="mb-6 antialiased tracking-tighter-custom">저는 캘린더를 여러개 사용합니다. 특히 연동되었거나 반복된 일정의 경우 별도 캘린더를 추가하여
+일정을 가져올때 무시하거나, 태그를 추가할 때 사용합니다.</p>
+<p class="mb-6 antialiased tracking-tighter-custom">‘다른 캘린더’ 우측의 <code>+ 버튼</code>을 통해 새로운 캘린더를 생성할 수 있습니다.
+연동된 계정 기준 안드로이드 기본 캘린더 앱, 삼성 갤럭시 기본 일정 앱의 경우 추가한 캘린더로 일정등록 및 수정이 가능했습니다.</p>
+<h2 class="text-3xl font-bold font-slab text-monstera-accent mt-12 md-3 antialiased" id="코드-설명">코드 설명</h2>
+<h3 class="text-2xl font-bold font-sans mt-12 md-3 antialiased" id="구글-캘린더">구글 캘린더</h3>
+<pre class="language-templater"><code is:raw="" class="language-templater">&#x3C;%*
+const {getEvents} = this.app.plugins.plugins["google-calendar"].api;
+const theEvents = await getEvents({
+    startDate: window.moment(tp.file.title, 'YYYY-MM-DD'),
+    endDate: window.moment(tp.file.title, 'YYYY-MM-DD')
+});
+
+tR = theEvents.reduce((text, event) => {
+    return text;
+}, "");
+%></code></pre>
+<p class="mb-6 antialiased tracking-tighter-custom">구글 캘린더 플러그인을 통해 현재 파일의 제목이 시작날짜~종료날짜 인 항목에 대해서
+캘린더의 일정을 가져오는 API 입니다.</p>
+<ul class="post-bullets pl-2">
+<li>저는 날짜 포맷을 YYYY-MM-DD로 사용하고 있어서 그대로 넣었습니다.</li>
+<li>코드에서는 tp.file.title, 즉 생성된 노트의 제목을 기준으로 캘린더를 호출합니다.</li>
+</ul>
+<h3 class="text-2xl font-bold font-sans mt-12 md-3 antialiased" id="예외처리">예외처리</h3>
+<pre class="language-javascript"><code is:raw="" class="language-javascript">tR <span class="token operator">=</span> theEvents<span class="token punctuation">.</span><span class="token function">reduce</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">text<span class="token punctuation">,</span> event</span><span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span><span class="token punctuation">(</span> event<span class="token punctuation">.</span>organizer<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    <span class="token comment">//캘린더명이 Todoist인것과 Routine인 것은 아래 내용을 수행하지 않고 반환합니다.</span>
+		<span class="token keyword">if</span><span class="token punctuation">(</span> event<span class="token punctuation">.</span>organizer<span class="token punctuation">.</span>displayName <span class="token operator">===</span> <span class="token string">"Todoist"</span> <span class="token operator">||</span> event<span class="token punctuation">.</span>organizer<span class="token punctuation">.</span>displayName <span class="token operator">===</span> <span class="token string">"Routine"</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+			<span class="token keyword">return</span> text<span class="token punctuation">;</span>
+		<span class="token punctuation">}</span>
+     <span class="token punctuation">}</span></code></pre>
+<p class="mb-6 antialiased tracking-tighter-custom">저는 Todoist, Routine 캘린더에 등록된 일정은 무시하고 싶었기 때문에 이렇게 작성했습니다.
+<code>event.organizer.displayName</code>은 앞서 만든 캘린더의 이름입니다.</p>
+<h3 class="text-2xl font-bold font-sans mt-12 md-3 antialiased" id="태그달기">태그달기</h3>
+<pre class="language-javascript"><code is:raw="" class="language-javascript">        <span class="token keyword">if</span><span class="token punctuation">(</span>event<span class="token punctuation">.</span>organizer<span class="token punctuation">.</span>displayName <span class="token operator">===</span> <span class="token string">"Apply"</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+            specialTag <span class="token operator">=</span> <span class="token string">'#apply'</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span><span class="token punctuation">(</span>event<span class="token punctuation">.</span>organizer<span class="token punctuation">.</span>displayName <span class="token operator">===</span> <span class="token string">"coupon"</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+            specialTag <span class="token operator">=</span> <span class="token string">'#coupon'</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+<span class="token operator">...</span>
+
+        text <span class="token operator">+=</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">- [ ] #event </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>specialTag<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>timeSummary<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">**</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>urlTitle<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">** ➕ </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>tp<span class="token punctuation">.</span>file<span class="token punctuation">.</span>title<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> 🛫 </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>tp<span class="token punctuation">.</span>file<span class="token punctuation">.</span>title<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> 📅 </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>endDate<span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">;</span>
+</code></pre>
+<p class="mb-6 antialiased tracking-tighter-custom">동일하게, <code>event.organizer.displayName</code>의 구별을 통해 태그를 추가해줄 수 있습니다.</p>
+<h3 class="text-2xl font-bold font-sans mt-12 md-3 antialiased" id="출력포맷">출력포맷</h3>
+<p class="mb-6 antialiased tracking-tighter-custom"><strong>시간 출력</strong></p>
+<pre class="language-javascript"><code is:raw="" class="language-javascript"><span class="token keyword">function</span> <span class="token function">makeTimeString</span><span class="token punctuation">(</span><span class="token parameter">event</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+	
+	<span class="token keyword">const</span> startDateTime <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Date</span><span class="token punctuation">(</span>event<span class="token punctuation">.</span>start<span class="token punctuation">.</span>dateTime<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">const</span> endDateTime <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Date</span><span class="token punctuation">(</span>event<span class="token punctuation">.</span>end<span class="token punctuation">.</span>dateTime<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment">// 시작시간 및 종료시간이 없을 경우 하루종일이라고 판단합니다.</span>
+	<span class="token keyword">if</span><span class="token punctuation">(</span> <span class="token function">isNaN</span><span class="token punctuation">(</span>startDateTime<span class="token punctuation">)</span> <span class="token operator">&#x26;&#x26;</span> <span class="token function">isNaN</span><span class="token punctuation">(</span>endDateTime<span class="token punctuation">)</span> <span class="token punctuation">)</span><span class="token punctuation">{</span> 
+		<span class="token keyword">return</span> <span class="token punctuation">{</span><span class="token literal-property property">formattedStartTime</span><span class="token operator">:</span><span class="token string">""</span><span class="token punctuation">,</span> <span class="token literal-property property">formattedDetail</span><span class="token operator">:</span><span class="token string">"하루종일"</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+	console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>startDateTime<span class="token operator">+</span><span class="token string">","</span><span class="token operator">+</span>endDateTime<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment">// 종료시간만 없을 경우 시작시간만 표기합니다.</span>
+    <span class="token keyword">const</span> formattedStartTime <span class="token operator">=</span> startDateTime<span class="token punctuation">.</span><span class="token function">getHours</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">padStart</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span> <span class="token string">'0'</span><span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token string">':'</span> <span class="token operator">+</span> startDateTime<span class="token punctuation">.</span><span class="token function">getMinutes</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">padStart</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span> <span class="token string">'0'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token keyword">if</span><span class="token punctuation">(</span> <span class="token function">isNaN</span><span class="token punctuation">(</span>endDateTime<span class="token punctuation">)</span> <span class="token punctuation">)</span> <span class="token punctuation">{</span>
+		<span class="token keyword">return</span> <span class="token punctuation">{</span>formattedStartTime<span class="token punctuation">,</span> <span class="token literal-property property">formattedDetail</span><span class="token operator">:</span><span class="token string">"하루종일"</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+
+    <span class="token keyword">const</span> formattedEndTime <span class="token operator">=</span> endDateTime<span class="token punctuation">.</span><span class="token function">getHours</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">padStart</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span> <span class="token string">'0'</span><span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token string">':'</span> <span class="token operator">+</span> endDateTime<span class="token punctuation">.</span><span class="token function">getMinutes</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">padStart</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span> <span class="token string">'0'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment">// 시작 종료일이 다른 경우 표기합니다.,</span>
+    <span class="token keyword">const</span> isSameDate <span class="token operator">=</span> startDateTime<span class="token punctuation">.</span><span class="token function">toDateString</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">===</span> endDateTime<span class="token punctuation">.</span><span class="token function">toDateString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">let</span> endDateDisplay <span class="token operator">=</span> formattedEndTime<span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>isSameDate<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        endDateDisplay <span class="token operator">=</span> <span class="token punctuation">(</span>endDateTime<span class="token punctuation">.</span><span class="token function">getMonth</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">padStart</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span> <span class="token string">'0'</span><span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token string">'-'</span> <span class="token operator">+</span>
+            endDateTime<span class="token punctuation">.</span><span class="token function">getDate</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">padStart</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span> <span class="token string">'0'</span><span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token string">'('</span> <span class="token operator">+</span>
+            endDateTime<span class="token punctuation">.</span><span class="token function">toLocaleString</span><span class="token punctuation">(</span><span class="token string">'en-US'</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> <span class="token literal-property property">weekday</span><span class="token operator">:</span> <span class="token string">'short'</span> <span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token string">') '</span> <span class="token operator">+</span>
+            formattedEndTime<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">const</span> duration <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Date</span><span class="token punctuation">(</span>endDateTime <span class="token operator">-</span> startDateTime<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">const</span> formattedDuration <span class="token operator">=</span> duration<span class="token punctuation">.</span><span class="token function">getUTCHours</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">padStart</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span> <span class="token string">'0'</span><span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token string">':'</span> <span class="token operator">+</span> duration<span class="token punctuation">.</span><span class="token function">getUTCMinutes</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">padStart</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span> <span class="token string">'0'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+	<span class="token keyword">const</span> formattedDetail <span class="token operator">=</span> formattedStartTime <span class="token operator">+</span><span class="token string">"~"</span><span class="token operator">+</span> <span class="token punctuation">(</span>isSameDate <span class="token operator">?</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>formattedEndTime<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> (</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>formattedDuration<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">)</span><span class="token template-punctuation string">`</span></span> <span class="token operator">:</span> endDateDisplay<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token punctuation">{</span>formattedStartTime<span class="token punctuation">,</span>formattedDetail<span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<p class="mb-6 antialiased tracking-tighter-custom">시간은 시작시간, 시작~종료시간을 출력할 수 있습니다.</p>
+<p class="mb-6 antialiased tracking-tighter-custom"><strong>출력 포맷팅</strong></p>
+<pre class="language-javascript"><code is:raw="" class="language-javascript">	<span class="token keyword">const</span> timeString <span class="token operator">=</span> <span class="token function">makeTimeString</span><span class="token punctuation">(</span>event<span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token comment">//제목의 경우 요약에 특수문자가 있을 경우 이스케이프 처리를 하고, 구글 캘린더 url을 연결합니다.</span>
+    <span class="token keyword">const</span> urlTitle <span class="token operator">=</span> <span class="token string">"["</span> <span class="token operator">+</span> <span class="token function">escapeMarkdown</span><span class="token punctuation">(</span>summary<span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token string">"]("</span> <span class="token operator">+</span> event<span class="token punctuation">.</span>htmlLink <span class="token operator">+</span> <span class="token string">")"</span><span class="token punctuation">;</span>
+    <span class="token comment">//시간정보의 경우 시작시간을 표기하며 대괄호에 포함합니다.</span>
+    <span class="token keyword">const</span> timeSummary <span class="token operator">=</span> timeString<span class="token punctuation">.</span>formattedStartTime <span class="token operator">?</span> <span class="token string">"["</span> <span class="token operator">+</span> timeString<span class="token punctuation">.</span>formattedStartTime <span class="token operator">+</span> <span class="token string">"] "</span> <span class="token operator">:</span> <span class="token string">""</span><span class="token punctuation">;</span>
+
+	<span class="token comment">//사전 정의된 태그가 있을 경우 추가하여 표기합니다.</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>text<span class="token punctuation">)</span> text <span class="token operator">+=</span> <span class="token string">"\r\n"</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>specialTag<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        text <span class="token operator">+=</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">- [ ] #event </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>specialTag<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>timeSummary<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">**</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>urlTitle<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">** ➕ </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>tp<span class="token punctuation">.</span>file<span class="token punctuation">.</span>title<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> 🛫 </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>tp<span class="token punctuation">.</span>file<span class="token punctuation">.</span>title<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> 📅 </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>endDate<span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+        text <span class="token operator">+=</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">- [ ] #event </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>timeSummary<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">**</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>urlTitle<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">** ➕ </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>tp<span class="token punctuation">.</span>file<span class="token punctuation">.</span>title<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> 📅 </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>tp<span class="token punctuation">.</span>file<span class="token punctuation">.</span>title<span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span></code></pre>
+<p class="mb-6 antialiased tracking-tighter-custom">시간정보, 태그정보를 추가하여 결과를 작성합니다.,
+<code>- [ ] #event ${specialTag} ${timeSummary}**${urlTitle}** ➕ ${tp.file.title} 🛫 ${tp.file.title} 📅 ${endDate}</code>;`</p>
+<ul class="post-bullets pl-2">
+<li>tasks 정보에 생성일을 현재날짜(파일제목), 예정일을 현재 날짜(파일 제목), 종료일을 기입하였습니다.</li>
+</ul>
+<h2 class="text-3xl font-bold font-slab text-monstera-accent mt-12 md-3 antialiased" id="전체코드">전체코드</h2>
+<pre class="language-templater"><code is:raw="" class="language-templater">## 오늘의 일정
+&#x3C;%*
+const {getEvents} = this.app.plugins.plugins["google-calendar"].api;
+const theEvents = await getEvents({
+    startDate: window.moment(tp.file.title, 'YYYY-MM-DD'),
+    endDate: window.moment(tp.file.title, 'YYYY-MM-DD')
+});
+
+// Function to escape markdown special characters 
+function escapeMarkdown(text) { 
+	return text.replace(/\\/g, '\\\\') // Escape backslash 
+	.replace(/^\*/g, '\-') // Escape asterisk 
+	.replace(/\*/g, '') // Escape asterisk 
+	.replace(/_/g, '\\_') // Escape underscore 
+	.replace(/{/g, '\\{') // Escape curly braces 
+	.replace(/}/g, '\\}') 
+	.replace(/\[/g, '\\[') // Escape square brackets 
+	.replace(/\]/g, '\\]') 
+	.replace(/\(/g, '\\(') // Escape parentheses 
+	.replace(/\)/g, '\\)') 
+	.replace(/#/g, '\\#') // Escape hash 
+	.replace(/\+/g, '\\+') // Escape plus 
+	.replace(/-/g, '\\-') // Escape minus (hyphen) 
+	.replace(/\./g, '\\.') // Escape dot 
+	.replace(/!/g, '\\!'); // Escape exclamation mark 
+}
+
+function escapeDetails(text){
+	var txt= text
+	.replace(//g, '>')
+	.replace(/\n\s?\n/g, '\r\n')
+	.replace(/\r\s*\n/g, '\r\n')
+	.replace(/\r\n/g, '\r\n')
+	.replace(/\s+\n/g, '\r\n')
+	.replace(/\r+\n/g, '\r\n')
+	.replace(/\r/g, '\r\n')
+	.replace(/\n+/g, '\r\n')
+	//.replace(/&#x26;/g, '&#x26;')
+	//.replace(/'/g, ''');
+	.replace(/\r+\n/g, '<br>')
+	;
+	//console.log(txt);
+	return txt;
+}
+// Function to convert URLs into markdown links
+function linkify(text) {
+	const urlRegex = /\bhttps?:\/\/[^\s$.?#&#x3C;].[^\s&#x3C;]*\b/ig;
+    return text.replace(urlRegex, function(url) {
+	    url = url.replace("\.",".");
+        // The matched URL is returned as a markdown link
+        console.log(url)
+        return '[' + url + '](' + url + ')';
+    });
+}
+function makeTimeString(event){
+	const startDateTime = new Date(event.start.dateTime);
+    const endDateTime = new Date(event.end.dateTime);
+
+	if( isNaN(startDateTime) &#x26;&#x26; isNaN(endDateTime) ){ 
+		return {formattedStartTime:"", formattedDetail:"하루종일"};
+	}
+	console.log(startDateTime+","+endDateTime);
+
+    // Format the Date objects to extract hours and minutes
+    const formattedStartTime = startDateTime.getHours().toString().padStart(2, '0') + ':' + startDateTime.getMinutes().toString().padStart(2, '0');
+	if( isNaN(endDateTime) ) {
+		return {formattedStartTime, formattedDetail:"하루종일"};
+	}
+
+    const formattedEndTime = endDateTime.getHours().toString().padStart(2, '0') + ':' + endDateTime.getMinutes().toString().padStart(2, '0');
+
+    // Check if the start and end dates are the same
+    const isSameDate = startDateTime.toDateString() === endDateTime.toDateString();
+
+    // Format the end date and time
+    let endDateDisplay = formattedEndTime;
+    if (!isSameDate) {
+        endDateDisplay = (endDateTime.getMonth() + 1).toString().padStart(2, '0') + '-' +
+            endDateTime.getDate().toString().padStart(2, '0') + '(' +
+            endDateTime.toLocaleString('en-US', { weekday: 'short' }) + ') ' +
+            formattedEndTime;
+    }
+
+    // Calculate duration
+    const duration = new Date(endDateTime - startDateTime);
+    const formattedDuration = duration.getUTCHours().toString().padStart(2, '0') + ':' + duration.getUTCMinutes().toString().padStart(2, '0');
+
+	const formattedDetail = formattedStartTime +"~"+ (isSameDate ? `${formattedEndTime} (${formattedDuration})` : endDateDisplay);
+    return {formattedStartTime,formattedDetail};
+}
+
+
+function processSummary(summary) {
+    // Extract the day index and total day count from the summary
+    const dayPattern = /\((\d+)\/(\d+)\)$/;
+    const match = summary.match(dayPattern);
+
+    if (match) {
+        const [_, dayIndex, totalDays] = match;
+        if (dayIndex === '1') {
+            return {
+                summary: summary.replace(dayPattern, ''),
+                isDisplay: true,
+                totalDays
+            };
+        } else {
+            return { isDisplay: false };
+        }
+    }
+
+    return { summary, isDisplay: true };
+}
+
+tR = theEvents.reduce((text, event) => {
+    if( event.organizer){
+		if( event.organizer.displayName === "Todoist" || event.organizer.displayName === "Routine"){
+			return text;
+		}
+     }
+
+    let summary = event.summary ? event.summary : '';
+    let specialTag = '';
+    let endDate = "";
+
+    if (event.eventType === "multiDay" &#x26;&#x26; event.organizer) {
+        if(event.organizer.displayName === "Apply"){
+            specialTag = '#apply';
+        } else if(event.organizer.displayName === "coupon"){
+            specialTag = '#coupon';
+        }
+
+        if (specialTag) {
+            const processedSummary = processSummary(event.summary);
+            if (!processedSummary.isDisplay) return text;
+            summary = processedSummary.summary;
+            let startDate = window.moment(tp.file.title, 'YYYY-MM-DD').format('YYYY-MM-DD');
+            endDate = processedSummary.totalDays ? window.moment(startDate).add(processedSummary.totalDays - 1, 'days').format('YYYY-MM-DD') : startDate;
+        }
+    }
+
+    const timeString = makeTimeString(event);
+    const urlTitle = "[" + escapeMarkdown(summary) + "](" + event.htmlLink + ")";
+    const timeSummary = timeString.formattedStartTime ? "[" + timeString.formattedStartTime + "] " : "";
+
+    if (text) text += "\r\n";
+    if (specialTag) {
+        text += `- [ ] #event ${specialTag} ${timeSummary}**${urlTitle}** ➕ ${tp.file.title} 🛫 ${tp.file.title} 📅 ${endDate}`;
+    } else {
+        text += `- [ ] #event ${timeSummary}**${urlTitle}** ➕ ${tp.file.title} 📅 ${tp.file.title}`;
+    }
+    return text;
+}, "");
+%></code></pre>
+<h2 class="text-3xl font-bold font-slab text-monstera-accent mt-12 md-3 antialiased" id="출력-예시">출력 예시</h2>
+<details>  
+<summary>이미지</summary>
+![](https://i.imgur.com/0rBk7MF.png)
+</details>
+* 저는 Templater 설정에 방금 만든 템플릿을 특정 폴더 템플릿으로 넣고, 오늘 날짜로 노트를 생성했습니다.
+<p class="mb-6 antialiased tracking-tighter-custom"><strong>템플릿 적용 결과</strong>
+<img src="https://i.imgur.com/h3JU8Xk.png" alt="" class="border border-monstera-border rounded-xl mb-6 w-full h-full">
+<img src="https://i.imgur.com/sExw8J1.png" alt="" class="border border-monstera-border rounded-xl mb-6 w-full h-full">
+해당 폴더에 새로운 문서를 만들때 이름을 날짜로 지정하면, 위 사진과 같이 출력이 됩니다.</p>
+<hr><a class="fixed bottom-4 right-4 justify-center rounded-md border border-monstera-border text-monstera-text p-2 text-sm font-medium shadow-sm hover:bg-monstera-bg focus:outline-none focus:ring-2 focus:ring-monstera-border focus:ring-offset-2 focus:ring-offset-monstera-bg transition-all" href="#title"><svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 512 512" class="h-5 w-5" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="48" d="M112 328l144-144 144 144"></path></svg></a><div class="hidden lg:flex absolute top-0 left-0 ml-[100%] h-fit" data-pagefind-ignore><div id="_anchor" class="px-4 fixed whitespace-nowrap"><div class="text-xl my-4 text-monstera-muted">On This Page</div><div class="peer border-l-2 border-l-monstera-border pl-4 text-base"><a href="#사전준비" class="block py-1 text-monstera-muted hover:text-monstera-accent transition-colors">사전준비</a></div><div class="peer border-l-2 border-l-monstera-border pl-8 text-sm"><a href="#플러그인" class="block py-1 text-monstera-muted hover:text-monstera-accent transition-colors">플러그인</a></div><div class="peer border-l-2 border-l-monstera-border pl-8 text-sm"><a href="#구글-캘린더-설정" class="block py-1 text-monstera-muted hover:text-monstera-accent transition-colors">구글 캘린더 설정</a></div><div class="peer border-l-2 border-l-monstera-border pl-4 text-base"><a href="#코드-설명" class="block py-1 text-monstera-muted hover:text-monstera-accent transition-colors">코드 설명</a></div><div class="peer border-l-2 border-l-monstera-border pl-8 text-sm"><a href="#구글-캘린더" class="block py-1 text-monstera-muted hover:text-monstera-accent transition-colors">구글 캘린더</a></div><div class="peer border-l-2 border-l-monstera-border pl-8 text-sm"><a href="#예외처리" class="block py-1 text-monstera-muted hover:text-monstera-accent transition-colors">예외처리</a></div><div class="peer border-l-2 border-l-monstera-border pl-8 text-sm"><a href="#태그달기" class="block py-1 text-monstera-muted hover:text-monstera-accent transition-colors">태그달기</a></div><div class="peer border-l-2 border-l-monstera-border pl-8 text-sm"><a href="#출력포맷" class="block py-1 text-monstera-muted hover:text-monstera-accent transition-colors">출력포맷</a></div><div class="peer border-l-2 border-l-monstera-border pl-4 text-base"><a href="#전체코드" class="block py-1 text-monstera-muted hover:text-monstera-accent transition-colors">전체코드</a></div><div class="peer border-l-2 border-l-monstera-border pl-4 text-base"><a href="#출력-예시" class="block py-1 text-monstera-muted hover:text-monstera-accent transition-colors">출력 예시</a></div><span id="_hover" class="peer-hover:border-l-monstera-subtle display absolute h-8 border-l-2 border-transparent -translate-y-40 transition-all" aria-hidden="true"></span><span id="_active" class="hidden border-l-monstera-border display absolute h-8 border-l-2 border-transparent -translate-y-40 transition-all" aria-hidden="true"></span></div></div></article></main><footer class="text-monstera-text p-4 text-center gap-2 flex flex-col"><div><span style="font-size:0.7em">Thanks to : <a href="https://jarada.life/"> - Guillaume EXCOFFIER.</a> with Astro, <a href="https://material-foundation.github.io/material-theme-builder/">Monstera Unique</a> from Material Theme Builder </span><br>
+&copy; 2025<a href="https://jarada.life/">Jaljara</a> All rights reserved.
+</div></footer></body><!-- <script src="https://cdn.jsdelivr.net/npm/prismjs@1.24.1/prism.min.js"
+  ></script> --><script type="module" client:load>
+    const Prism = await import('https://cdn.skypack.dev/prismjs')
+    import { loadLanguages } from '/post/script/highlight/load-prism.js'
+    const components = await import(
+      'https://cdn.skypack.dev/prismjs/components.js'
+    )
+    import { Timeout } from '/post/script/timeout.js' // Adjust the path as necessary
+    const myTimeout = new Timeout()
+    const languageSet = new Set()
+    function extractLanguages() {
+      const languages = new Set()
+      document.querySelectorAll('pre[class^="language-"]').forEach(element => {
+        const match = element.className.match(/language-(\w+)/)
+        if (match) {
+          languages.add(match[1])
+        }
+      })
+      return Array.from(languages)
+    }
+
+    async function loadHighlighters(languagesToLoad) {
+      if (Prism && Prism.languages) {
+        await loadLanguages(Prism, languagesToLoad, components.default)
+        Prism.highlightAll()
+      } else {
+        myTimeout.set(500).then(() => loadHighlighters())
+      }
+    }
+
+    function applyLevelClasses(list, level = 1) {
+      list.querySelectorAll('li').forEach(li => {
+        console.log('li' + li)
+        li.classList.add(`level-${((level - 1) % 5) + 1}`)
+        const nestedList = li.querySelector('ul')
+        if (nestedList) {
+          applyLevelClasses(nestedList, level + 1)
+        }
+      })
+    }
+    function embedConverter() {
+      document.querySelectorAll('pre.language-embed').forEach(pre => {
+        // Create the titlebar element
+        const titlebar_elem = document.createElement('div')
+        titlebar_elem.className = 'titlebar'
+
+        // Create the title label element
+        const label_elem = document.createElement('span')
+        label_elem.className = 'title-label'
+        label_elem.textContent = '링크'
+        titlebar_elem.appendChild(label_elem)
+
+        // Create and append the clip button
+        const clip = document.createElement('button')
+        clip.innerHTML = `<i class="fa-solid fa-paperclip"></i>`
+        clip.classList.add('clip')
+        titlebar_elem.appendChild(clip)
+
+        // Parse the YAML content
+        const code = pre.querySelector('code')
+        const content = code.textContent.trim()
+
+        let data
+        try {
+          data = jsyaml.load(content)
+        } catch (e) {
+          console.error('Failed to parse YAML content', e)
+          return
+        }
+
+        // Create the embed container
+        const container = document.createElement('div')
+        container.classList.add('embed-container')
+        container.style.cursor = 'pointer' // Change cursor to pointer to indicate it's clickable
+        container.onclick = () => {
+          window.open(data.url, '_blank', 'noopener')
+        }
+
+        // Create the image element
+        const image = document.createElement('div')
+        image.classList.add('embed-image')
+        image.style.backgroundImage = `url(${data.image})`
+
+        // Create the wrapper content
+        const wrapperContent = document.createElement('div')
+        wrapperContent.classList.add('embed-wrapper')
+
+        // Create the title element
+        const title = document.createElement('div')
+        title.classList.add('embed-title')
+        const titleLink = document.createElement('a')
+        titleLink.href = data.url
+        titleLink.textContent = data.title
+        titleLink.target = '_blank'
+        titleLink.rel = 'noopener'
+        title.appendChild(titleLink)
+
+        // Create the description element
+        const description = document.createElement('div')
+        description.classList.add('embed-description')
+        description.textContent = data.description
+
+        // Create the link element
+        const link = document.createElement('div')
+        link.classList.add('embed-link')
+        const linkAnchor = document.createElement('a')
+        linkAnchor.href = data.url
+        linkAnchor.textContent = data.url
+        linkAnchor.target = '_blank'
+        linkAnchor.rel = 'noopener'
+        link.appendChild(linkAnchor)
+
+        // Append elements to wrapper content
+        wrapperContent.appendChild(title)
+        wrapperContent.appendChild(description)
+        wrapperContent.appendChild(link)
+
+        // Append elements to container
+        container.appendChild(titlebar_elem)
+        container.appendChild(image)
+        container.appendChild(wrapperContent)
+
+        // Replace pre element with the new container
+        pre.replaceWith(container)
+      })
+    }
+    function pageLoadHandler() {
+      const codeBlocks = Array.from(document.querySelectorAll('pre'))
+
+      codeBlocks.forEach(codeBlock => {
+        if (!codeBlock.classList.contains('language-embed')) {
+          const wrapper = document.createElement('div')
+          wrapper.className = 'code-block-wrapper'
+          wrapper.style.position = 'relative'
+
+          codeBlock.parentNode.insertBefore(wrapper, codeBlock)
+          wrapper.appendChild(codeBlock)
+
+          const codeElement = codeBlock.querySelector('code')
+          const classList = codeElement.className.split(' ')
+          const languageClass = classList.find(cls =>
+            cls.startsWith('language-')
+          )
+          const language = languageClass
+            ? languageClass.replace('language-', '').toUpperCase()
+            : 'TEXT'
+
+          // Creating the titlebar
+          const titlebar = document.createElement('div')
+          titlebar.className = 'titlebar'
+
+          // Creating the title label
+          const titleLabel = document.createElement('span')
+          titleLabel.className = 'title-label'
+          titleLabel.textContent = '코드블록'
+
+          // Creating the copy button
+          const copyButton = document.createElement('button')
+          copyButton.className = 'copy-code'
+          copyButton.innerHTML = `<span>${language}</span><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f4bfdd' stroke-width='1.75'%3E%3Cpath d='M3 19a2 2 0 0 1-1-2V2a2 2 0 0 1 1-1h13a2 2 0 0 1 2 1'/%3E%3Crect x='6' y='5' width='13' height='16' rx='1.5' ry='1.5'/%3E%3C/svg%3E" alt="Copy Icon" style="width: 16px; height: 16px;">`
+
+          // Append the title label and copy button to the titlebar
+          titlebar.appendChild(titleLabel)
+          titlebar.appendChild(copyButton)
+
+          // Append the titlebar to the wrapper
+          wrapper.insertBefore(titlebar, codeBlock)
+
+          // Function to copy code to clipboard
+          copyButton.addEventListener('click', async () => {
+            try {
+              const code = codeBlock.textContent
+              await navigator.clipboard.writeText(code)
+              copyButton.textContent = '복사되었습니다!'
+              setTimeout(() => {
+                copyButton.innerHTML = `<span>${language}</span><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f4bfdd' stroke-width='1.75'%3E%3Cpath d='M3 19a2 2 0 0 1-1-2V2a2 2 0 0 1 1-1h13a2 2 0 0 1 2 1'/%3E%3Crect x='6' y='5' width='13' height='16' rx='1.5' ry='1.5'/%3E%3C/svg%3E" alt="Copy Icon" style="width: 16px; height: 16px;">`
+              }, 2000)
+            } catch (err) {
+              console.error('Failed to copy code: ', err)
+            }
+          })
+        }
+      })
+    }
+
+    if (document.readyState === 'complete') {
+      loadHighlighters(extractLanguages())
+      pageLoadHandler()
+      const languagesToLoad = Array.from(languageSet)
+
+      const lists = document.querySelectorAll('article > ul.post-bullets')
+      lists.forEach(list => {
+        applyLevelClasses(list)
+      })
+      embedConverter()
+    } else {
+      document.addEventListener('DOMContentLoaded', pageLoadHandler)
+    }
+  </script>
