@@ -1,0 +1,438 @@
+<!DOCTYPE html><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"><!-- Global Metadata --><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><meta name="generator" content="Astro v3.2.3"><!-- Primary Meta Tags --><title>옵시디언 GIT - 충돌 방지 동기화용 배치파일 스크립트</title><meta name="title" content="옵시디언 GIT - 충돌 방지 동기화용 배치파일 스크립트"><meta name="description" content="옵시디언 GIT 플러그인 사용중 잦은 confilct를 만나게 될 경우, 이를 방지하기 위한 방법입니다."><!-- Open Graph / Facebook --><meta property="og:type" content="website"><meta property="og:url" content="https://jarada.life/post/ko/obsidian/git-plugin-sync-conflict-prevention/"><meta property="og:title" content="옵시디언 GIT - 충돌 방지 동기화용 배치파일 스크립트"><meta property="og:description" content="옵시디언 GIT 플러그인 사용중 잦은 confilct를 만나게 될 경우, 이를 방지하기 위한 방법입니다."><meta property="og:image" content="https://jarada.life/placeholder-social.jpg"><!-- Twitter --><meta property="twitter:card" content="summary_large_image"><meta property="twitter:url" content="https://jarada.life/post/ko/obsidian/git-plugin-sync-conflict-prevention/"><meta property="twitter:title" content="옵시디언 GIT - 충돌 방지 동기화용 배치파일 스크립트"><meta property="twitter:description" content="옵시디언 GIT 플러그인 사용중 잦은 confilct를 만나게 될 경우, 이를 방지하기 위한 방법입니다."><meta property="twitter:image" content="https://jarada.life/placeholder-social.jpg"><meta name="astro-view-transitions-enabled" content="true"><meta name="astro-view-transitions-fallback" content="swap"><script>
+  const setDarkMode = () => {
+    const theme = (() => {
+    if (typeof localStorage !== 'undefined' && localStorage.getItem('theme')) {
+      return localStorage.getItem('theme')
+    }
+    if (window.matchMedia('(prefers-color-scheme:dark)').matches) {
+      return 'dark'
+    }
+    return 'light'
+  })()
+    if (theme === 'light') {
+      document.documentElement.classList.remove('dark')
+    } else {
+      document.documentElement.classList.add('dark')
+    }
+  }
+  setDarkMode()
+  document.addEventListener('astro:after-swap', setDarkMode);
+</script><link rel="stylesheet" href="/post/_astro/About.531d6b1d.css" />
+<link rel="stylesheet" href="/post/_astro/_tag_.3d0b0689.css" />
+<style>@import"https://fonts.googleapis.com/css2?family=VT323&display=swap";code[class*=language-],pre[class*=language-]{text-align:left;white-space:pre;word-spacing:normal;word-break:normal;word-wrap:normal;color:#cdd6f4;background:#232136;font-size:.7em;line-height:1.5em;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-hyphens:none;hyphens:none}code[class*=language-]::-moz-selection,pre[class*=language-]::-moz-selection,code[class*=language-] ::-moz-selection,pre[class*=language-] ::-moz-selection{background:#393552}code[class*=language-]::-moz-selection,pre[class*=language-]::-moz-selection,code[class*=language-] ::-moz-selection,pre[class*=language-] ::-moz-selection,code[class*=language-]::selection,pre[class*=language-]::selection,code[class*=language-] ::selection,pre[class*=language-] ::selection{background:#393552}:not(pre)>code[class*=language-]{white-space:normal;border-radius:.2em;padding:.1em}pre[class*=language-]{overflow:auto;position:relative;margin:.5em 0;padding:2.2em 1em 1.25em}.token.comment,.token.prolog,.token.doctype,.token.cdata{color:#59546d}.token.punctuation{color:#cdd6f4}.token.namespace{opacity:.7}.token.property,.token.tag,.token.boolean,.token.number,.token.constant,.token.symbol,.token.deleted{color:#eb6f92}.token.selector,.token.attr-name,.token.string,.token.char,.token.builtin,.token.inserted{color:#9ccfd8}.token.operator,.token.entity,.token.url,.token.variable{color:#f6c177}.token.atrule,.token.attr-value,.token.keyword{color:#c4a7e7}.token.function,.token.class-name{color:#f4bfdd}.token.regex,.token.important{color:#cba6f7}.token.important,.token.bold{font-weight:700}.token.italic{font-style:italic}.token.entity{cursor:help}.token.class,.token.hexcode,.token.unit{color:#f6c177}.token.pseudo-class,.token.pseudo-element,.token.attribute{color:#a5e844}
+</style><script type="module" src="/post/_astro/hoisted.116ee871.js"></script><body class="bg-monstera-bg text-monstera-text break-words leading-6 transition-colors duration-500"><header class="fixed w-full p-2 z-20 backdrop-blur-md"><div class="mx-auto"><nav class="flex items-center gap-6 text-base justify-center"><a href="/"><h2 class="font-semibold tracking-tighter p-2 font-slab text-lg text-monstera-accent">Jaljara</h2></a><div class="flex items-center gap-6 "><a href="https://jarada.life/tools/"><h3 class="font-semibold tracking-tighter p-2 font-slab text-lg text-monstera-text">Tools</h3></a><a href="/post/about/"><h3 class="font-semibold tracking-tighter p-2 font-slab text-lg text-monstera-text">About</h3></a><style>astro-island,astro-slot,astro-static-slot{display:contents}</style><script>(()=>{var r=(i,c,s)=>{let n=async()=>{await(await i())()},t=new IntersectionObserver(e=>{for(let o of e)if(o.isIntersecting){t.disconnect(),n();break}});for(let e of s.children)t.observe(e)};(self.Astro||(self.Astro={})).visible=r;window.dispatchEvent(new Event("astro:visible"));})();;(()=>{var b=Object.defineProperty;var f=(c,o,i)=>o in c?b(c,o,{enumerable:!0,configurable:!0,writable:!0,value:i}):c[o]=i;var l=(c,o,i)=>(f(c,typeof o!="symbol"?o+"":o,i),i);var p;{let c={0:t=>m(t),1:t=>i(t),2:t=>new RegExp(t),3:t=>new Date(t),4:t=>new Map(i(t)),5:t=>new Set(i(t)),6:t=>BigInt(t),7:t=>new URL(t),8:t=>new Uint8Array(t),9:t=>new Uint16Array(t),10:t=>new Uint32Array(t)},o=t=>{let[e,r]=t;return e in c?c[e](r):void 0},i=t=>t.map(o),m=t=>typeof t!="object"||t===null?t:Object.fromEntries(Object.entries(t).map(([e,r])=>[e,o(r)]));customElements.get("astro-island")||customElements.define("astro-island",(p=class extends HTMLElement{constructor(){super(...arguments);l(this,"Component");l(this,"hydrator");l(this,"hydrate",async()=>{var d;if(!this.hydrator||!this.isConnected)return;let e=(d=this.parentElement)==null?void 0:d.closest("astro-island[ssr]");if(e){e.addEventListener("astro:hydrate",this.hydrate,{once:!0});return}let r=this.querySelectorAll("astro-slot"),a={},h=this.querySelectorAll("template[data-astro-template]");for(let n of h){let s=n.closest(this.tagName);s!=null&&s.isSameNode(this)&&(a[n.getAttribute("data-astro-template")||"default"]=n.innerHTML,n.remove())}for(let n of r){let s=n.closest(this.tagName);s!=null&&s.isSameNode(this)&&(a[n.getAttribute("name")||"default"]=n.innerHTML)}let u;try{u=this.hasAttribute("props")?m(JSON.parse(this.getAttribute("props"))):{}}catch(n){let s=this.getAttribute("component-url")||"<unknown>",y=this.getAttribute("component-export");throw y&&(s+=` (export ${y})`),console.error(`[hydrate] Error parsing props for component ${s}`,this.getAttribute("props"),n),n}await this.hydrator(this)(this.Component,u,a,{client:this.getAttribute("client")}),this.removeAttribute("ssr"),this.dispatchEvent(new CustomEvent("astro:hydrate"))});l(this,"unmount",()=>{this.isConnected||this.dispatchEvent(new CustomEvent("astro:unmount"))})}disconnectedCallback(){document.removeEventListener("astro:after-swap",this.unmount),document.addEventListener("astro:after-swap",this.unmount,{once:!0})}connectedCallback(){if(!this.hasAttribute("await-children")||document.readyState==="interactive"||document.readyState==="complete")this.childrenConnectedCallback();else{let e=()=>{document.removeEventListener("DOMContentLoaded",e),r.disconnect(),this.childrenConnectedCallback()},r=new MutationObserver(()=>{var a;((a=this.lastChild)==null?void 0:a.nodeType)===Node.COMMENT_NODE&&this.lastChild.nodeValue==="astro:end"&&(this.lastChild.remove(),e())});r.observe(this,{childList:!0}),document.addEventListener("DOMContentLoaded",e)}}async childrenConnectedCallback(){let e=this.getAttribute("before-hydration-url");e&&await import(e),this.start()}start(){let e=JSON.parse(this.getAttribute("opts")),r=this.getAttribute("client");if(Astro[r]===void 0){window.addEventListener(`astro:${r}`,()=>this.start(),{once:!0});return}Astro[r](async()=>{let a=this.getAttribute("renderer-url"),[h,{default:u}]=await Promise.all([import(this.getAttribute("component-url")),a?import(a):()=>()=>{}]),d=this.getAttribute("component-export")||"default";if(!d.includes("."))this.Component=h[d];else{this.Component=h;for(let n of d.split("."))this.Component=this.Component[n]}return this.hydrator=u,this.hydrate},e,this)}attributeChangedCallback(){this.hydrate()}},l(p,"observedAttributes",["props"]),p))}})();</script><astro-island uid="Z2eTxXL" prefix="r1" component-url="/post/_astro/ThemeToggleButton.1a7e2e25.js" component-export="default" renderer-url="/post/_astro/client.ed23057d.js" props="{}" ssr="" client="visible" opts="{&quot;name&quot;:&quot;ThemeToggle&quot;,&quot;value&quot;:true}" await-children=""><div></div><!--astro:end--></astro-island><astro-island uid="Z2a6dbW" prefix="r2" component-url="/post/_astro/DropdownMenu.6017750a.js" component-export="default" renderer-url="/post/_astro/client.ed23057d.js" props="{&quot;tags&quot;:[1,[[0,&quot;#obsidian&quot;],[0,&quot;#dataview&quot;],[0,&quot;#git&quot;],[0,&quot;#batch&quot;],[0,&quot;#tasks&quot;],[0,&quot;#templater&quot;],[0,&quot;#publish&quot;]]]}" ssr="" client="visible" opts="{&quot;name&quot;:&quot;DropdownMenu&quot;,&quot;value&quot;:true}" await-children=""><div class="relative inline-block text-left" data-headlessui-state=""><div><button aria-label="menu" class="inline-flex justify-center rounded-md border border-monstera-border text-monstera-text p-2 text-sm font-medium shadow-sm hover:bg-monstera-bg focus:outline-none focus:ring-2 focus:ring-monstera-border focus:ring-offset-2 focus:ring-offset-monstera-bg transition-all" id="headlessui-menu-button-:r2R1:" type="button" aria-haspopup="menu" aria-expanded="false" data-headlessui-state=""><svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 512 512" class="h-5 w-5" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path fill="none" stroke-linecap="round" stroke-miterlimit="10" stroke-width="48" d="M88 152h336M88 256h336M88 360h336"></path></svg></button></div></div><!--astro:end--></astro-island></div></nav></div></header><main class="pt-[56px]"><!-- article of each class --><article class="px-8 max-w-3xl  mx-auto pt-5 relative w-full"><div class="mb-8"></div><h1 id="title" class="text-4xl font-bold font-slab text-monstera-accent">옵시디언 GIT - 충돌 방지 동기화용 배치파일 스크립트</h1><hr class="border-top border-monstera-border my-4"><p class="mb-6 antialiased tracking-tighter-custom">여러 PC에서 옵시디언을 사용중인데, 동기화를 Git 플러그인을 이용하면 충돌이 나는 일이 종종 있습니다. (conflict-files-obsidian-git.md)
+이는 Git 동기화가 옵시디언에 구동된 문서의 라이프사이클과 맞지 않을 때,  또는 여러 pc에서 각각 동일한 경로의 새 파일을 생성한 경우 주로 발생합니다.</p>
+<p class="mb-6 antialiased tracking-tighter-custom">이 스크립트는 Windows 환경에서 전자의 경우에 충돌 가능성을 줄여주는 방법입니다.</p>
+<h2 class="text-3xl font-bold font-slab text-monstera-accent mt-12 md-3 antialiased" id="git-설치">Git 설치</h2>
+<p class="mb-6 antialiased tracking-tighter-custom">이 방법은 깃 명령어를 옵시디언 외부에서 사용하는 방법입니다. 따라서 Git을 Windows에 설치해야 합니다.</p>
+<ol class="list-decimal list-inside pl-2">
+<li>
+<p class="mb-6 antialiased tracking-tighter-custom">Git 설치하기:</p>
+<ul class="post-bullets pl-2">
+<li>Git 공식 웹사이트에서 Windows용 Git 설치 프로그램을 다운로드합니다
+<a href="https://git-scm.com/downloads/win" class="underline underline-offset-2 text-monstera-accent hover:text-monstera-text">https://git-scm.com/downloads/win</a></li>
+<li>다운로드한 설치 프로그램을 실행합니다</li>
+<li>설치 과정에서 대부분 기본 설정을 그대로 사용해도 됩니다</li>
+<li>[!] “Adjusting your PATH environment” 단계에서는 “Git from the command line and also from 3rd-party software” 옵션 선택 합니다.</li>
+<li>설치가 완료되면 Windows 재시작 (권장)</li>
+</ul>
+</li>
+<li>
+<p class="mb-6 antialiased tracking-tighter-custom">설치 확인:</p>
+<ul class="post-bullets pl-2">
+<li>Windows 명령 프롬프트(cmd) 실행
+<ul class="post-bullets pl-2">
+<li>설치 후 재부팅 하지 않았다면, 프로그램 종료 후 다시 실행해주세요</li>
+</ul>
+</li>
+<li>다음 명령어 입력:
+<pre class="language-plaintext"><code is:raw="" class="language-plaintext">git --version</code></pre>
+</li>
+</ul>
+</li>
+</ol>
+<p class="mb-6 antialiased tracking-tighter-custom"><img src="https://i.imgur.com/xzzqcj8.png" alt="" class="border border-monstera-border rounded-xl mb-6 w-full h-full"></p>
+<ul class="post-bullets pl-2">
+<li>위와 같이 Git 버전이 표시되면 설치가 성공적으로 완료된 것입니다</li>
+</ul>
+<h2 class="text-3xl font-bold font-slab text-monstera-accent mt-12 md-3 antialiased" id="동기화-방법-1-시작--종료시-스크립트-실행하기">동기화 방법 1. 시작 / 종료시 스크립트 실행하기</h2>
+<ul class="post-bullets pl-2">
+<li>옵시디언 시작시, 종료시 각각 강제동기화를 하여 충돌을 최소화 하는 방법입니다.</li>
+</ul>
+<h3 class="text-2xl font-bold font-sans mt-12 md-3 antialiased" id="시작시-동기화-스크립트">시작시 동기화 스크립트</h3>
+<ul class="post-bullets pl-2">
+<li>시작 시점 동기화를 위해 아래와 같은 스크립트를 텍스트 편집기로 작성하여, 배치파일로 저장합니다.
+<ul class="post-bullets pl-2">
+<li>start_sync.bat</li>
+</ul>
+</li>
+</ul>
+<pre class="language-plaintext"><code is:raw="" class="language-plaintext">@echo off
+cd /d %~dp0
+echo === Obsidian Git Sync Start ===
+echo Pulling latest changes...
+
+:: 현재 브랜치 확인
+for /f "tokens=* USEBACKQ" %%F in (`git branch --show-current`) do set branch=%%F
+echo Current branch: %branch%
+
+:: 변경사항 임시 저장
+git stash
+
+:: 원격 저장소에서 변경사항 가져오기
+git pull origin %branch%
+
+:: 임시 저장한 변경사항 적용
+git stash pop
+
+:: 충돌이 있는지 확인
+git diff --check
+if %errorlevel% neq 0 (
+    echo WARNING: Conflicts detected! Please resolve manually.
+    pause
+) else (
+    echo Sync completed successfully!
+)
+
+echo === Sync Complete ===
+timeout /t 3</code></pre>
+<h3 class="text-2xl font-bold font-sans mt-12 md-3 antialiased" id="종료시-동기화-스크립트">종료시 동기화 스크립트</h3>
+<ul class="post-bullets pl-2">
+<li>종료시에도 동기화를 수행하면 혹시나 유실, 또는 충돌을 이중방지 할 수 있습니다.
+<ul class="post-bullets pl-2">
+<li>end_sync.bat</li>
+</ul>
+</li>
+</ul>
+<pre class="language-plaintext"><code is:raw="" class="language-plaintext">@echo off
+cd /d %~dp0
+echo === Obsidian Git Sync End ===
+
+:: 현재 브랜치 확인
+for /f "tokens=* USEBACKQ" %%F in (`git branch --show-current`) do set branch=%%F
+echo Current branch: %branch%
+
+:: 변경사항 확인
+git status
+
+:: 모든 변경사항 스테이징
+git add .
+
+:: 변경사항이 있다면 커밋
+git diff --staged --quiet
+if %errorlevel% neq 0 (
+    echo Committing changes...
+    git commit -m "Auto-sync: %date% %time%"
+    
+    :: 원격 저장소에 푸시
+    git push origin %branch%
+    echo Changes pushed successfully!
+) else (
+    echo No changes to commit.
+)
+
+echo === Sync Complete ===
+timeout /t 3</code></pre>
+<h2 class="text-3xl font-bold font-slab text-monstera-accent mt-12 md-3 antialiased" id="동기화-방법-2-시작--종료-통합-통기화-실행">동기화 방법 2. 시작 / 종료 통합 통기화 실행</h2>
+<ul class="post-bullets pl-2">
+<li>이 방법은 1개의 배치파일에 시작 / 종료 동기화까지 모두 처리하는 방법입니다.
+<ul class="post-bullets pl-2">
+<li>옵시디언 실행 바로가기를 사용하지 않고 이 배치파일의 바로가기로만 실행해주세요.</li>
+</ul>
+</li>
+<li>30초마다 옵시디언 실행상태를 체크하고, 종료시 동기화를 하게 됩니다.
+<ul class="post-bullets pl-2">
+<li>옵시디언 실행이 된 후에 떠 있는 명령프롬프트창을 닫지 말아주세요. 닫으면 종료시 동기화가 안됩니다.</li>
+<li>단점은 옵시디언이 켜져있는 동안 스크립트도 계속 실행되고 있으므로, 시스템 메모리를 소량 차지하게 됩니다.</li>
+</ul>
+</li>
+</ul>
+<p class="mb-6 antialiased tracking-tighter-custom"><img src="https://i.imgur.com/SbXlWcd.png" alt="" class="border border-monstera-border rounded-xl mb-6 w-full h-full"></p>
+<pre class="language-plaintext"><code is:raw="" class="language-plaintext">@echo off
+setlocal EnableDelayedExpansion
+
+:: 옵시디언 설치 경로 (실제 경로로 수정 필요)
+set OBSIDIAN_PATH="C:\Program Files\Obsidian\Obsidian.exe"
+:: 옵시디언 볼트 경로 (스크립트 파일이 볼트 경로와 일치하지 않는 경우 수정 필요)
+set VAULT_PATH="%~dp0"
+
+echo === Obsidian Launcher with Git Sync ===
+cd /d %VAULT_PATH%
+
+:: Git 설치 확인
+git --version > nul 2>&#x26;1
+if %errorlevel% neq 0 (
+    echo Git is not installed! Please install Git first.
+    pause
+    exit /b 1
+)
+
+echo Starting Git sync...
+:: 현재 브랜치 확인
+for /f "tokens=* USEBACKQ" %%F in (`git branch --show-current`) do set branch=%%F
+echo Current branch: %branch%
+
+:: Fetch 먼저 실행하여 변경사항 확인
+echo Fetching changes...
+git fetch origin %branch%
+
+:: 변경사항 확인
+git diff --name-only HEAD..origin/%branch% > changes.txt
+set /p CHANGES=&#x3C;changes.txt
+del changes.txt
+
+if not "!CHANGES!"=="" (
+    echo Changes detected. Pulling changes...
+    :: 현재 변경사항 저장
+    git stash
+    :: 원격 변경사항 가져오기
+    git pull origin %branch%
+    :: 저장했던 변경사항 적용
+    git stash pop
+    
+    :: 충돌 확인
+    git diff --check
+    if !errorlevel! neq 0 (
+        echo WARNING: Conflicts detected! Please resolve manually.
+        pause
+    )
+) else (
+    echo No changes to pull.
+)
+
+echo Starting Obsidian...
+start "" %OBSIDIAN_PATH% %VAULT_PATH%
+
+:: Obsidian이 종료될 때까지 대기
+echo Waiting for Obsidian to close...
+:WAIT_LOOP
+tasklist /FI "IMAGENAME eq Obsidian.exe" 2>NUL | find /I /N "Obsidian.exe">NUL
+if "%ERRORLEVEL%"=="0" (
+	timeout /t 30 >nul
+    goto WAIT_LOOP
+)
+
+echo Obsidian closed. Starting final sync...
+
+:: 변경사항 확인
+git status
+
+:: 변경사항이 있다면 커밋 및 푸시
+git diff --exit-code --quiet
+if %errorlevel% neq 0 (
+    :: 모든 변경사항 스테이징
+    git add .
+    
+    :: 커밋
+    git commit -m "Auto-sync: %date% %time%"
+    
+    :: 원격 저장소에 푸시
+    git push origin %branch%
+    echo Changes pushed successfully!
+) else (
+    echo No changes to commit.
+)
+
+echo === All operations completed ===
+timeout /t 3
+exit</code></pre><a class="fixed bottom-4 right-4 justify-center rounded-md border border-monstera-border text-monstera-text p-2 text-sm font-medium shadow-sm hover:bg-monstera-bg focus:outline-none focus:ring-2 focus:ring-monstera-border focus:ring-offset-2 focus:ring-offset-monstera-bg transition-all" href="#title"><svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 512 512" class="h-5 w-5" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="48" d="M112 328l144-144 144 144"></path></svg></a><div class="hidden lg:flex absolute top-0 left-0 ml-[100%] h-fit" data-pagefind-ignore><div id="_anchor" class="px-4 fixed whitespace-nowrap"><div class="text-xl my-4 text-monstera-muted">On This Page</div><div class="peer border-l-2 border-l-monstera-border pl-4 text-base"><a href="#git-설치" class="block py-1 text-monstera-muted hover:text-monstera-accent transition-colors">Git 설치</a></div><div class="peer border-l-2 border-l-monstera-border pl-4 text-base"><a href="#동기화-방법-1-시작--종료시-스크립트-실행하기" class="block py-1 text-monstera-muted hover:text-monstera-accent transition-colors">동기화 방법 1. 시작 / 종료시 스크립트 실행하기</a></div><div class="peer border-l-2 border-l-monstera-border pl-8 text-sm"><a href="#시작시-동기화-스크립트" class="block py-1 text-monstera-muted hover:text-monstera-accent transition-colors">시작시 동기화 스크립트</a></div><div class="peer border-l-2 border-l-monstera-border pl-8 text-sm"><a href="#종료시-동기화-스크립트" class="block py-1 text-monstera-muted hover:text-monstera-accent transition-colors">종료시 동기화 스크립트</a></div><div class="peer border-l-2 border-l-monstera-border pl-4 text-base"><a href="#동기화-방법-2-시작--종료-통합-통기화-실행" class="block py-1 text-monstera-muted hover:text-monstera-accent transition-colors">동기화 방법 2. 시작 / 종료 통합 통기화 실행</a></div><span id="_hover" class="peer-hover:border-l-monstera-subtle display absolute h-8 border-l-2 border-transparent -translate-y-40 transition-all" aria-hidden="true"></span><span id="_active" class="hidden border-l-monstera-border display absolute h-8 border-l-2 border-transparent -translate-y-40 transition-all" aria-hidden="true"></span></div></div></article></main><footer class="text-monstera-text p-4 text-center gap-2 flex flex-col"><div><span style="font-size:0.7em">Thanks to : <a href="https://jarada.life/"> - Guillaume EXCOFFIER.</a> with Astro, <a href="https://material-foundation.github.io/material-theme-builder/">Monstera Unique</a> from Material Theme Builder </span><br>
+&copy; 2025<a href="https://jarada.life/">Jaljara</a> All rights reserved.
+</div></footer></body><!-- <script src="https://cdn.jsdelivr.net/npm/prismjs@1.24.1/prism.min.js"
+  ></script> --><script type="module" client:load>
+    const Prism = await import('https://cdn.skypack.dev/prismjs')
+    import { loadLanguages } from '/post/script/highlight/load-prism.js'
+    const components = await import(
+      'https://cdn.skypack.dev/prismjs/components.js'
+    )
+    import { Timeout } from '/post/script/timeout.js' // Adjust the path as necessary
+    const myTimeout = new Timeout()
+    const languageSet = new Set()
+    function extractLanguages() {
+      const languages = new Set()
+      document.querySelectorAll('pre[class^="language-"]').forEach(element => {
+        const match = element.className.match(/language-(\w+)/)
+        if (match) {
+          languages.add(match[1])
+        }
+      })
+      return Array.from(languages)
+    }
+
+    async function loadHighlighters(languagesToLoad) {
+      if (Prism && Prism.languages) {
+        await loadLanguages(Prism, languagesToLoad, components.default)
+        Prism.highlightAll()
+      } else {
+        myTimeout.set(500).then(() => loadHighlighters())
+      }
+    }
+
+    function applyLevelClasses(list, level = 1) {
+      list.querySelectorAll('li').forEach(li => {
+        console.log('li' + li)
+        li.classList.add(`level-${((level - 1) % 5) + 1}`)
+        const nestedList = li.querySelector('ul')
+        if (nestedList) {
+          applyLevelClasses(nestedList, level + 1)
+        }
+      })
+    }
+    function embedConverter() {
+      document.querySelectorAll('pre.language-embed').forEach(pre => {
+        // Create the titlebar element
+        const titlebar_elem = document.createElement('div')
+        titlebar_elem.className = 'titlebar'
+
+        // Create the title label element
+        const label_elem = document.createElement('span')
+        label_elem.className = 'title-label'
+        label_elem.textContent = '링크'
+        titlebar_elem.appendChild(label_elem)
+
+        // Create and append the clip button
+        const clip = document.createElement('button')
+        clip.innerHTML = `<i class="fa-solid fa-paperclip"></i>`
+        clip.classList.add('clip')
+        titlebar_elem.appendChild(clip)
+
+        // Parse the YAML content
+        const code = pre.querySelector('code')
+        const content = code.textContent.trim()
+
+        let data
+        try {
+          data = jsyaml.load(content)
+        } catch (e) {
+          console.error('Failed to parse YAML content', e)
+          return
+        }
+
+        // Create the embed container
+        const container = document.createElement('div')
+        container.classList.add('embed-container')
+        container.style.cursor = 'pointer' // Change cursor to pointer to indicate it's clickable
+        container.onclick = () => {
+          window.open(data.url, '_blank', 'noopener')
+        }
+
+        // Create the image element
+        const image = document.createElement('div')
+        image.classList.add('embed-image')
+        image.style.backgroundImage = `url(${data.image})`
+
+        // Create the wrapper content
+        const wrapperContent = document.createElement('div')
+        wrapperContent.classList.add('embed-wrapper')
+
+        // Create the title element
+        const title = document.createElement('div')
+        title.classList.add('embed-title')
+        const titleLink = document.createElement('a')
+        titleLink.href = data.url
+        titleLink.textContent = data.title
+        titleLink.target = '_blank'
+        titleLink.rel = 'noopener'
+        title.appendChild(titleLink)
+
+        // Create the description element
+        const description = document.createElement('div')
+        description.classList.add('embed-description')
+        description.textContent = data.description
+
+        // Create the link element
+        const link = document.createElement('div')
+        link.classList.add('embed-link')
+        const linkAnchor = document.createElement('a')
+        linkAnchor.href = data.url
+        linkAnchor.textContent = data.url
+        linkAnchor.target = '_blank'
+        linkAnchor.rel = 'noopener'
+        link.appendChild(linkAnchor)
+
+        // Append elements to wrapper content
+        wrapperContent.appendChild(title)
+        wrapperContent.appendChild(description)
+        wrapperContent.appendChild(link)
+
+        // Append elements to container
+        container.appendChild(titlebar_elem)
+        container.appendChild(image)
+        container.appendChild(wrapperContent)
+
+        // Replace pre element with the new container
+        pre.replaceWith(container)
+      })
+    }
+    function pageLoadHandler() {
+      const codeBlocks = Array.from(document.querySelectorAll('pre'))
+
+      codeBlocks.forEach(codeBlock => {
+        if (!codeBlock.classList.contains('language-embed')) {
+          const wrapper = document.createElement('div')
+          wrapper.className = 'code-block-wrapper'
+          wrapper.style.position = 'relative'
+
+          codeBlock.parentNode.insertBefore(wrapper, codeBlock)
+          wrapper.appendChild(codeBlock)
+
+          const codeElement = codeBlock.querySelector('code')
+          const classList = codeElement.className.split(' ')
+          const languageClass = classList.find(cls =>
+            cls.startsWith('language-')
+          )
+          const language = languageClass
+            ? languageClass.replace('language-', '').toUpperCase()
+            : 'TEXT'
+
+          // Creating the titlebar
+          const titlebar = document.createElement('div')
+          titlebar.className = 'titlebar'
+
+          // Creating the title label
+          const titleLabel = document.createElement('span')
+          titleLabel.className = 'title-label'
+          titleLabel.textContent = '코드블록'
+
+          // Creating the copy button
+          const copyButton = document.createElement('button')
+          copyButton.className = 'copy-code'
+          copyButton.innerHTML = `<span>${language}</span><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f4bfdd' stroke-width='1.75'%3E%3Cpath d='M3 19a2 2 0 0 1-1-2V2a2 2 0 0 1 1-1h13a2 2 0 0 1 2 1'/%3E%3Crect x='6' y='5' width='13' height='16' rx='1.5' ry='1.5'/%3E%3C/svg%3E" alt="Copy Icon" style="width: 16px; height: 16px;">`
+
+          // Append the title label and copy button to the titlebar
+          titlebar.appendChild(titleLabel)
+          titlebar.appendChild(copyButton)
+
+          // Append the titlebar to the wrapper
+          wrapper.insertBefore(titlebar, codeBlock)
+
+          // Function to copy code to clipboard
+          copyButton.addEventListener('click', async () => {
+            try {
+              const code = codeBlock.textContent
+              await navigator.clipboard.writeText(code)
+              copyButton.textContent = '복사되었습니다!'
+              setTimeout(() => {
+                copyButton.innerHTML = `<span>${language}</span><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f4bfdd' stroke-width='1.75'%3E%3Cpath d='M3 19a2 2 0 0 1-1-2V2a2 2 0 0 1 1-1h13a2 2 0 0 1 2 1'/%3E%3Crect x='6' y='5' width='13' height='16' rx='1.5' ry='1.5'/%3E%3C/svg%3E" alt="Copy Icon" style="width: 16px; height: 16px;">`
+              }, 2000)
+            } catch (err) {
+              console.error('Failed to copy code: ', err)
+            }
+          })
+        }
+      })
+    }
+
+    if (document.readyState === 'complete') {
+      loadHighlighters(extractLanguages())
+      pageLoadHandler()
+      const languagesToLoad = Array.from(languageSet)
+
+      const lists = document.querySelectorAll('article > ul.post-bullets')
+      lists.forEach(list => {
+        applyLevelClasses(list)
+      })
+      embedConverter()
+    } else {
+      document.addEventListener('DOMContentLoaded', pageLoadHandler)
+    }
+  </script>
